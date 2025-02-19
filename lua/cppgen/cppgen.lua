@@ -150,7 +150,7 @@ local function prev_different_snippet()
     end
 end
 
-vim.api.nvim_create_user_command('CPPGen', function(opts)
+vim.api.nvim_create_user_command('CppGen', function(opts)
     local arg = opts.fargs[1] or 'info'
     if arg == 'info' then
         show_info()
@@ -165,6 +165,6 @@ vim.api.nvim_create_user_command('CPPGen', function(opts)
     elseif arg == 'Prev' then
         prev_different_snippet()
     end
-end, { nargs=1, desc = 'CPPGen commands.' })
+end, { nargs=1, desc = 'CppGen commands.' })
 
 return M

@@ -10,17 +10,17 @@ local gen = require('cppgen.generator')
 -- Local parameters
 ---------------------------------------------------------------------------------------------------
 local L = {
-    group     = "CPPGen",
+    group     = "CppGen",
     lspclient = nil,
 
     -- We flag code vs generated snippetys as same, different or do not know where it came from
     signs = {
         -- Ctl-V ue646
-        CPPGenSignSame  = { text = "", texthl = "DiagnosticUnnecessary" },
-        CPPGenSignDiff  = { text = "", texthl = "DiagnosticSignWarn"    },
-        CPPGenSignDono  = { text = "", texthl = "DiagnosticSignInfo"    },
+        CppGenSignSame  = { text = "", texthl = "DiagnosticUnnecessary" },
+        CppGenSignDiff  = { text = "", texthl = "DiagnosticSignWarn"    },
+        CppGenSignDono  = { text = "", texthl = "DiagnosticSignInfo"    },
     },
-    namespace = vim.api.nvim_create_namespace("CPPGen"),
+    namespace = vim.api.nvim_create_namespace("CppGen"),
     results   = {},
 }
 
@@ -136,7 +136,7 @@ local function visit_relevant_nodes(symbols, bufnr, callback)
                     gen.visit(symbols, span.first)
                     local code = vim.api.nvim_buf_get_lines(bufnr, span.first, span.last+1, false)
                     local snip = match(code, gen.generate(true))
-                    local name = snip and (same(code, snip.lines) and 'CPPGenSignSame' or 'CPPGenSignDiff') or 'CPPGenSignDono'
+                    local name = snip and (same(code, snip.lines) and 'CppGenSignSame' or 'CppGenSignDiff') or 'CppGenSignDono'
                     vim.fn.sign_place(0, L.group, name, bufnr, { lnum = span.first + 1, priority = 10 })
                     if snip then
                         table.insert(L.results, {name = name, snip = snip, code = code, span = span, sign = L.signs[name]})
@@ -315,7 +315,7 @@ end
 
 -- Check if current lines of code and the generated lines of code in a given record are identical
 function M.same(record)
-    return record.name == 'CPPGenSignSame'
+    return record.name == 'CppGenSignSame'
 end
 
 -- Generated snippets picker

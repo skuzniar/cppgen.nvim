@@ -107,10 +107,10 @@ For a list of examples see EXAMPLES <EXAMPLES.md>
 - Information
     - `:CppGen info` to see a list of enabled generators and keys that trigger them.
 - Navigate through generated code.
-    - `:CppGen next to jump to the next snippet.
-    - `:CppGen Next to jump to the next snippet, if the generated code would be different from the current one.
-    - `:CppGen prev to jump to the previous snippet.
-    - `:CppGen Prev to jump to the previous snippet, if the generated code would be different from the current one.
+    - `:CppGen next` to jump to the next snippet.
+    - `:CppGen Next` to jump to the next snippet, if the generated code would be different from the current one.
+    - `:CppGen prev` to jump to the previous snippet.
+    - `:CppGen Prev` to jump to the previous snippet, if the generated code would be different from the current one.
 - Preview generated code.
     - `:CppGen show` to open code snippets in the Telescope picker .
 
