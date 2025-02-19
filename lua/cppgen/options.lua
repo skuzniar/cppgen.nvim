@@ -37,8 +37,6 @@ M.default = {
 
     -- Navigation options.
     navigator = {
-        -- When scanning generated snippets, only consider those that differ from the currently generated code.
-        different = true,
     },
 
     -- Generated code can be decorated using an attribute. Set to empty string to disable.

@@ -9,12 +9,12 @@ Several Large Language Models (LLMs) can handle a wide range of coding tasks. Ho
 - **Performance**: A code generator that runs locally is often faster than one that interacts with the remote system.
 
 ## Design Philosophy
-cppgen acts as a source of code fragments for the completion engine. While in the insert mode, the location of the cursor within the buffer determines the current context. 
-Certain language constructs, like classes, enumerations, or switch statements, located above or around the cursor may trigger code generation. cppgen uses type information 
+`cppgen.nvim` acts as a source of code fragments for the completion engine. While in the insert mode, the location of the cursor within the buffer determines the current context. 
+Certain language constructs, like classes, enumerations, or switch statements, located above or around the cursor may trigger code generation. `cppgen.nvim` uses type information 
 that it gets from the LSP server to generate code.
 
 ## Features
-cppgen can generate the following code snippets.
+`cppgen.nvim` can currently generate the following code snippets.
 - Output stream shift operators for classes and enumerations.
 - Serialization functions for classes and enumerations.
 - To string conversion functions for enumerations.
@@ -43,7 +43,7 @@ For a complete list of options see the [Customization](#customization) section.
 ## Configuration:
 
 ### nvim-cmp:
-To link cmp with this source, go into your cmp configuration file and include `{ name = "cppgen" }` under sources.
+To link `cmp` with `cppgen.nvim`, go into your cmp configuration file and include `{ name = "cppgen" }` under sources.
 
 ```lua
 cmp.setup {
@@ -61,7 +61,15 @@ cmp.setup {
 For a list of examples see [EXAMPLES](EXAMPLES.md)
 
 # Commands
-You can type **:CppGenInfo** to see a list of enabled generators and keys that trigger them.
+- Information
+  - `:CppGen info` to see a list of enabled generators and keys that trigger them.
+- Navigate through generated code.
+  - `:CppGen next  to jump to the next snippet.
+  - `:CppGen Next to jump to the next snippet, if the generated code would be different from the current one.
+  - `:CppGen prev  to jump to the previous snippet.
+  - `:CppGen Prev to jump to the previous snippet, if the generated code would be different from the current one.
+- Preview generated code.
+  - `:CppGen show` to open code snippets in the Telescope picker .
 
 # Customization
 Some aspects of code generation can be customized using options. Here are the default options.

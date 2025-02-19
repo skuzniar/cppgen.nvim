@@ -81,19 +81,8 @@ local function pad(s, len)
     return s .. string.rep(' ', len - string.len(s))
 end
 
-vim.api.nvim_create_user_command('CPPGen', function(opts)
-    local sdir = opts.fargs[1] or 'next'
-    local srec = sdir == 'next' and nav.get_next_record() or nav.get_prev_record()
-    if srec then
-        local row = srec.span.first + 1
-        local _, col = vim.fn.getline(row):find('^%s*')
-        vim.api.nvim_win_set_cursor(0, { row, col })
 
-        nav.preview(srec)
-    end
-end, { nargs=1, desc = 'Navigate generated snippets.' })
-
-vim.api.nvim_create_user_command('CPPGenInfo', function()
+local function show_info()
     local info = gen.info()
 
     if #info > 0 then
@@ -112,10 +101,70 @@ vim.api.nvim_create_user_command('CPPGenInfo', function()
             prev = record[1]
         end
     end
-end, { desc = 'Brief information about cppgen sources' })
+end
 
-vim.api.nvim_create_user_command('CPPGenValidate', function()
+-- Show generated snippets
+local function show_snippets()
     val.validate()
-end, { desc = 'Show generated old and new code' })
+end
+
+-- Go the the next snippet
+local function preview_snippet(srec)
+    if srec then
+        local row = srec.span.first + 1
+        local _, col = vim.fn.getline(row):find('^%s*')
+        vim.api.nvim_win_set_cursor(0, { row, col })
+        nav.preview(srec)
+    end
+end
+
+-- Go the the next snippet
+local function next_snippet()
+    local srec = nav.get_next_record(false)
+    if srec then
+        preview_snippet(srec)
+    end
+end
+
+-- Go the the next different snippet
+local function next_different_snippet()
+    local srec = nav.get_next_record(true)
+    if srec then
+        preview_snippet(srec)
+    end
+end
+
+-- Go the the previous snippet
+local function prev_snippet()
+    local srec = nav.get_prev_record(false)
+    if srec then
+        preview_snippet(srec)
+    end
+end
+
+-- Go the the previous different snippet
+local function prev_different_snippet()
+    local srec = nav.get_prev_record(true)
+    if srec then
+        preview_snippet(srec)
+    end
+end
+
+vim.api.nvim_create_user_command('CPPGen', function(opts)
+    local arg = opts.fargs[1] or 'info'
+    if arg == 'info' then
+        show_info()
+    elseif arg == 'show' then
+        show_snippets()
+    elseif arg == 'next' then
+        next_snippet()
+    elseif arg == 'Next' then
+        next_different_snippet()
+    elseif arg == 'prev' then
+        prev_snippet()
+    elseif arg == 'Prev' then
+        prev_different_snippet()
+    end
+end, { nargs=1, desc = 'CPPGen commands.' })
 
 return M

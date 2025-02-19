@@ -98,11 +98,11 @@ function M.preview(record)
 end
 
 --- Get the next snippet record relative to the cursor
-function M.get_next_record()
+function M.get_next_record(different)
     local srec = nil
     local line = vim.api.nvim_win_get_cursor(0)[1]
     for _,s in ipairs(val.results()) do
-        if not G.navigator.different or not val.same(s) then
+        if not different or not val.same(s) then
             srec = s
             if s.span.first+1 > line then
                 break
@@ -117,7 +117,7 @@ function M.get_prev_record(different)
     local srec = nil
     local line = vim.api.nvim_win_get_cursor(0)[1]
     for _,s in ipairs(val.results()) do
-        if not G.navigator.different or not val.same(s) then
+        if not different or not val.same(s) then
             if s.span.first+1 >= line then
                 break
             end
