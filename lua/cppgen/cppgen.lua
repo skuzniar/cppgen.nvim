@@ -151,32 +151,39 @@ local function prev_different_snippet()
     end
 end
 
--- Dispatch base on argument
-local function dispatch(arg)
-    if arg == 'help' then
-        show_help()
-    elseif arg == 'show' then
-        show_snippets()
-    elseif arg == 'next' then
-        next_snippet()
-    elseif arg == 'Next' then
-        next_different_snippet()
-    elseif arg == 'prev' then
-        prev_snippet()
-    elseif arg == 'Prev' then
-        prev_different_snippet()
-    end
+-- Dispatch table
+local calls =
+{
+    help = show_help,
+    show = show_snippets,
+    next = next_snippet,
+    Next = next_different_snippet,
+    prev = prev_snippet,
+    Prev = prev_different_snippet,
+}
+
+local function get_keys(t)
+  local keys={}
+  for key,_ in pairs(t) do
+    table.insert(keys, key)
+  end
+  return keys
 end
 
-vim.api.nvim_create_user_command('CppGen', function(opts)
-        dispatch(opts.fargs[1] or 'help')
+vim.api.nvim_create_user_command('CppGen',
+    function(opts)
+        local f = calls[opts.fargs[1] or 'help']
+        if f then
+            f()
+        end
     end,
     {
         nargs = 1,
         complete = function(ArgLead, CmdLine, CursorPos)
-            return { 'help', 'show', 'next', 'Next', 'prev', 'Prev' }
+            return get_keys(calls)
         end,
         desc = 'CppGen commands.'
-    })
+    }
+)
 
 return M
