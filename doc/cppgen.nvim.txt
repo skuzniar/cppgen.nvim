@@ -1,4 +1,4 @@
-*cppgen.nvim.txt*           For v0.10.1          Last change: 2025 February 19
+*cppgen.nvim.txt*           For v0.10.1          Last change: 2025 February 20
 
 ==============================================================================
 Table of Contents                              *cppgen.nvim-table-of-contents*
@@ -104,15 +104,15 @@ For a list of examples see EXAMPLES <EXAMPLES.md>
 ==============================================================================
 3. Commands                                             *cppgen.nvim-commands*
 
-- Information
+- Information.
     - `:CppGen info` to see a list of enabled generators and keys that trigger them.
 - Navigate through generated code.
     - `:CppGen next` to jump to the next snippet.
-    - `:CppGen Next` to jump to the next snippet, if the generated code would be different from the current one.
+    - `:CppGen Next` to jump to the next snippet, if different than the generated code.
     - `:CppGen prev` to jump to the previous snippet.
-    - `:CppGen Prev` to jump to the previous snippet, if the generated code would be different from the current one.
+    - `:CppGen Prev` to jump to the previous snippet, if different than the generated code.
 - Preview generated code.
-    - `:CppGen show` to open code snippets in the Telescope picker .
+    - `:CppGen show` to open code snippets in the Telescope picker.
 
 
 ==============================================================================

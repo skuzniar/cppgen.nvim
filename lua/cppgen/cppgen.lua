@@ -71,8 +71,8 @@ local function max_lengths(records)
     local max_2nd_len = 0
 
     for _,r in ipairs(records) do
-        max_1st_len = math.max(max_1st_len, string.len(r[1]))
-        max_2nd_len = math.max(max_2nd_len, string.len(r[2]))
+        max_1st_len = math.max(max_1st_len, r[1] and string.len(r[1]) or 0)
+        max_2nd_len = math.max(max_2nd_len, r[2] and string.len(r[2]) or 0)
     end
     return max_1st_len, max_2nd_len
 end
@@ -81,25 +81,26 @@ local function pad(s, len)
     return s .. string.rep(' ', len - string.len(s))
 end
 
-
-local function show_info()
+local function show_help()
     local info = gen.info()
 
     if #info > 0 then
-        local header = { 'Trigger', 'Generated code'}
+        local header = { 'Completion trigger', 'Generated code snippet'}
         local maxlen, _ = max_lengths(info)
         maxlen = math.max(maxlen, string.len(header[1]))
 
-        vim.api.nvim_echo({ { (' %s   %s\n'):format(pad(header[1], maxlen), header[2]), 'Special' } }, false, {})
-        local prev = nil
+        local lines = { { (' %s   %s\n'):format(pad(header[1], maxlen), header[2]), 'Special' } }
+
+        local prev  = nil
         for _, record in ipairs(info) do
             if (prev == nil) or (prev ~= record[1]) then
-                vim.api.nvim_echo({ { (' %s - %s\n'):format(pad(record[1], maxlen), record[2]), 'Normal' } }, false, {})
+                table.insert(lines, { (' %s - %s\n'):format(pad(record[1], maxlen), record[2]), 'Normal' })
             else
-                vim.api.nvim_echo({ { (' %s   %s\n'):format(pad("",        maxlen), record[2]), 'Normal' } }, false, {})
+                table.insert(lines, { (' %s   %s\n'):format(pad('',        maxlen), record[2]), 'Normal' })
             end
             prev = record[1]
         end
+        vim.api.nvim_echo(lines, false, {})
     end
 end
 
@@ -150,10 +151,10 @@ local function prev_different_snippet()
     end
 end
 
-vim.api.nvim_create_user_command('CppGen', function(opts)
-    local arg = opts.fargs[1] or 'info'
-    if arg == 'info' then
-        show_info()
+-- Dispatch base on argument
+local function dispatch(arg)
+    if arg == 'help' then
+        show_help()
     elseif arg == 'show' then
         show_snippets()
     elseif arg == 'next' then
@@ -165,6 +166,17 @@ vim.api.nvim_create_user_command('CppGen', function(opts)
     elseif arg == 'Prev' then
         prev_different_snippet()
     end
-end, { nargs=1, desc = 'CppGen commands.' })
+end
+
+vim.api.nvim_create_user_command('CppGen', function(opts)
+        dispatch(opts.fargs[1] or 'help')
+    end,
+    {
+        nargs = 1,
+        complete = function(ArgLead, CmdLine, CursorPos)
+            return { 'help', 'show', 'next', 'Next', 'prev', 'Prev' }
+        end,
+        desc = 'CppGen commands.'
+    })
 
 return M
