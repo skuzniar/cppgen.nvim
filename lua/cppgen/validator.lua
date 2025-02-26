@@ -384,8 +384,8 @@ local function snippets(opts)
         attach_mappings = function(prompt_bufnr, map)
             actions.select_default:replace(function()
                 actions.close(prompt_bufnr)
-                --local selection = acstate.get_selected_entry()
-                --vim.api.nvim_put({ selection[1] }, "", false, true)
+                local selection = acstate.get_selected_entry()
+                vim.api.nvim_win_set_cursor(0, { selection.value.span.first+1, 0 })
             end)
             return true
         end,
