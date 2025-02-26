@@ -13,16 +13,29 @@ local L = {
     group     = "CppGen",
     lspclient = nil,
 
-    -- We flag code vs generated snippetys as same, different or do not know where it came from
+    -- We compare the code and the generated snippets and flag it as same or different
     signs = {
         -- Ctl-V ue646
-        CppGenSignSame  = { text = "", texthl = "DiagnosticUnnecessary" },
-        CppGenSignDiff  = { text = "", texthl = "DiagnosticSignWarn"    },
-        CppGenSignDono  = { text = "", texthl = "DiagnosticSignInfo"    },
+        CppGenSignSame  = { text = "", texthl = "DiagnosticUnnecessary", severity = vim.diagnostic.severity.HINT },
+        CppGenSignDiff  = { text = "", texthl = "DiagnosticSignWarn",    severity = vim.diagnostic.severity.WARN },
     },
     namespace = vim.api.nvim_create_namespace("CppGen"),
     results   = {},
 }
+
+vim.diagnostic.config({
+    signs = {
+        text = {
+            -- Ctl-V ue646
+            [vim.diagnostic.severity.HINT]  = L.signs.CppGenSignSame.text,
+            [vim.diagnostic.severity.WARN]  = L.signs.CppGenSignDiff.text,
+        },
+        numhl = {
+            [vim.diagnostic.severity.HINT]  = L.signs.CppGenSignSame.texthl,
+            [vim.diagnostic.severity.WARN]  = L.signs.CppGenSignDiff.texthl,
+        },
+    },
+}, L.namespace)
 
 ---------------------------------------------------------------------------------------------------
 -- Global parameters for code generation.
@@ -136,10 +149,9 @@ local function visit_relevant_nodes(symbols, bufnr, callback)
                     gen.visit(symbols, span.first)
                     local code = vim.api.nvim_buf_get_lines(bufnr, span.first, span.last+1, false)
                     local snip = match(code, gen.generate(true))
-                    local name = snip and (same(code, snip.lines) and 'CppGenSignSame' or 'CppGenSignDiff') or 'CppGenSignDono'
-                    vim.fn.sign_place(0, L.group, name, bufnr, { lnum = span.first + 1, priority = 10 })
                     if snip then
-                        table.insert(L.results, {name = name, snip = snip, code = code, span = span, sign = L.signs[name]})
+                        local sign = same(code, snip.lines) and L.signs.CppGenSignSame or L.signs.CppGenSignDiff
+                        table.insert(L.results, {snip = snip, code = code, span = span, sign = sign})
                     end
                 end
                 callback(node)
@@ -161,6 +173,23 @@ local function visit(symbols, bufnr)
             end
         end
     )
+
+    vim.diagnostic.reset(L.namespace, 0)
+
+    local diagnostics = {}
+    for _,r in pairs(L.results) do
+        if r.sign.severity == L.signs.CppGenSignDiff.severity then
+            local bpos, epos = string.find(r.snip.lines[1], '^%s*')
+            table.insert(diagnostics,
+            {
+                lnum = r.span.first,
+                col  = bpos - 1,
+                message  = r.snip.lines[1] .. '\n' .. 'Generated code is different from the current code.',
+                severity = r.sign.severity,
+            })
+        end
+    end
+    vim.diagnostic.set(L.namespace, 0, diagnostics)
 end
 
 ---------------------------------------------------------------------------------------------------

@@ -14,10 +14,24 @@ local G = {}
 -- Local parameters
 ---------------------------------------------------------------------------------------------------
 local L = {
+    autogroup = vim.api.nvim_create_augroup('CppGenNavigator', {}),
 }
 
 --- Exported functions
 local M = {}
+
+-- setup auto_cmds
+vim.api.nvim_create_autocmd({
+    "CursorMoved",
+    "CursorMovedI",
+    "ModeChanged",
+},
+{
+    group = L.autogroup,
+    callback = function()
+        M.preview()
+    end
+})
 
 ---------------------------------------------------------------------------------------------------
 --- Initialization and lifecycle callbacks
@@ -78,8 +92,7 @@ local function options(record)
 end
 
 --- Diff preview
-function M.preview(record)
-    -- Kill old buffer and window
+function M.preview(srec)
     if L.win then
         vim.api.nvim_win_close(L.win, true)
         L.win = nil
@@ -90,15 +103,34 @@ function M.preview(record)
     end
 
     -- Show preview window if there is a difference
-    if not val.same(record) then
-        L.buf = vim.api.nvim_create_buf(false, true)
-        val.set_diffs(L.buf, record)
-        L.win = vim.api.nvim_open_win(L.buf, false, options(record))
+    if srec then
+        if not val.same(srec) then
+            L.buf = vim.api.nvim_create_buf(false, true)
+            val.set_diffs(L.buf, srec)
+            L.win = vim.api.nvim_open_win(L.buf, false, options(srec))
+        end
     end
 end
 
+--- Get the snippet record encloses the cursor
+function M.get_enclosing(different)
+    local srec = nil
+    local line = vim.api.nvim_win_get_cursor(0)[1]
+    for _,s in ipairs(val.results()) do
+        if not different or not val.same(s) then
+            if line >= s.span.first+1 and line <= s.span.last+1 then
+                srec = s
+                break
+            elseif line < s.span.first+1 then
+                break
+            end
+        end
+    end
+    return srec
+end
+
 --- Get the next snippet record relative to the cursor
-function M.get_next_record(different)
+function M.goto_next(different)
     local srec = nil
     local line = vim.api.nvim_win_get_cursor(0)[1]
     for _,s in ipairs(val.results()) do
@@ -109,11 +141,15 @@ function M.get_next_record(different)
             end
         end
     end
-    return srec
+    if srec then
+        local row = srec.span.first + 1
+        local _, col = vim.fn.getline(row):find('^%s*')
+        vim.api.nvim_win_set_cursor(0, { row, col })
+    end
 end
 
 --- Get the previous snippet record relative to the cursor
-function M.get_prev_record(different)
+function M.goto_prev(different)
     local srec = nil
     local line = vim.api.nvim_win_get_cursor(0)[1]
     for _,s in ipairs(val.results()) do
@@ -124,7 +160,11 @@ function M.get_prev_record(different)
             srec = s
         end
     end
-    return srec
+    if srec then
+        local row = srec.span.first + 1
+        local _, col = vim.fn.getline(row):find('^%s*')
+        vim.api.nvim_win_set_cursor(0, { row, col })
+    end
 end
 
 return M

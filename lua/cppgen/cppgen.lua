@@ -109,46 +109,29 @@ local function show_snippets()
     val.validate()
 end
 
--- Go the the next snippet
-local function preview_snippet(srec)
-    if srec then
-        local row = srec.span.first + 1
-        local _, col = vim.fn.getline(row):find('^%s*')
-        vim.api.nvim_win_set_cursor(0, { row, col })
-        nav.preview(srec)
-    end
+-- Preview current snippet, only when different
+local function preview()
+    nav.preview(nav.get_enclosing(true))
 end
 
 -- Go the the next snippet
 local function next_snippet()
-    local srec = nav.get_next_record(false)
-    if srec then
-        preview_snippet(srec)
-    end
+    nav.goto_next(false)
 end
 
 -- Go the the next different snippet
 local function next_different_snippet()
-    local srec = nav.get_next_record(true)
-    if srec then
-        preview_snippet(srec)
-    end
+    nav.goto_next(true)
 end
 
 -- Go the the previous snippet
 local function prev_snippet()
-    local srec = nav.get_prev_record(false)
-    if srec then
-        preview_snippet(srec)
-    end
+    nav.goto_prev(false)
 end
 
 -- Go the the previous different snippet
 local function prev_different_snippet()
-    local srec = nav.get_prev_record(true)
-    if srec then
-        preview_snippet(srec)
-    end
+    nav.goto_prev(true)
 end
 
 -- Dispatch table
@@ -160,6 +143,7 @@ local calls =
     Next = next_different_snippet,
     prev = prev_snippet,
     Prev = prev_different_snippet,
+    view = preview,
 }
 
 local function get_keys(t)
