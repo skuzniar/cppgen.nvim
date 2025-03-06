@@ -16,8 +16,8 @@ local L = {
     -- We compare the code and the generated snippets and flag it as same or different
     signs = {
         -- Ctl-V ue646
-        CppGenSignSame  = { text = "", texthl = "DiagnosticUnnecessary", severity = vim.diagnostic.severity.HINT },
-        CppGenSignDiff  = { text = "", texthl = "DiagnosticSignWarn",    severity = vim.diagnostic.severity.WARN },
+        CppGenSignSame  = { same = true,  text = "", texthl = "DiagnosticUnnecessary", severity = vim.diagnostic.severity.HINT },
+        CppGenSignDiff  = { same = false, text = "", texthl = "DiagnosticSignWarn",    severity = vim.diagnostic.severity.WARN },
     },
     namespace = vim.api.nvim_create_namespace("CppGen"),
     results   = {},
@@ -344,7 +344,7 @@ end
 
 -- Check if current lines of code and the generated lines of code in a given record are identical
 function M.same(record)
-    return record.name == 'CppGenSignSame'
+    return record.same
 end
 
 -- Generated snippets picker

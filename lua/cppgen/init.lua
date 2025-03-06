@@ -7,7 +7,7 @@ local cgn = require("cppgen.cppgen")
 ---------------------------------------------------------------------------------------------------
 local M = {}
 
-local cppgen = 'CppGen'
+local cppgen = 'cppgen'
 local csrcid = nil
 
 --- LSP attach callback
