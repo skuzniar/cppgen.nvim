@@ -94,12 +94,11 @@ end
 
 --- Return true if th code can be generated in the current context - buffer and cursor position
 local function available()
-    log.trace("available:")
     local result = false
     for _,g in pairs(G) do
         result = result or g.available()
     end
-    log.trace("Can" .. (result and " " or " not ") .. "generate code")
+    log.trace("available: can" .. (result and " " or " not ") .. "generate code")
     return result
 end
 
@@ -155,7 +154,6 @@ end
 --- Return whether this source is available in the current context or not (optional).
 ---------------------------------------------------------------------------------------------------
 function M:is_available()
-    log.trace('is_available')
     return available()
 end
 
@@ -206,6 +204,7 @@ function M:complete(params, callback)
     log.trace('complete:', params)
     local items = M.generate(false)
     if items then
+        log.trace('complete:', items)
         callback(items)
     end
 end
