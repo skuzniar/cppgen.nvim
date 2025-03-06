@@ -108,11 +108,19 @@ local function levenshtein(a, b)
 	return matrix[b_len][a_len]
 end
 
+--- Compare two lines of code
+local function equal(lhs, rhs)
+    local function trim(s)
+        return string.gsub(string.gsub(s, '^%s+', ''), '%s+$', '')
+    end
+    return trim(lhs) == trim(rhs)
+end
+
 --- Compare lines of code
 local function same(lhslines, rhslines)
     if #lhslines == #rhslines then
         for i=1,#lhslines do
-            if lhslines[i] ~= rhslines[i] then
+            if not equal(lhslines[i], rhslines[i]) then
                 return false
             end
         end
@@ -248,9 +256,10 @@ local function matrix(r, c)
     return setmetatable(m, mt_2D)
 end
 
-local function lcs(old, new)
+local function lcs(old, new, equal)
     local rows = #old
     local cols = #new
+    local iseq = equal or function(lhs, rhs) return lhs == rhs end
 
     C = matrix(rows, cols)
 
@@ -258,7 +267,7 @@ local function lcs(old, new)
     for c=0, C.cols do C[0][c] = 0 end
     for r=1, rows do
         for c=1, cols do
-            if old[r] == new[c] then
+            if iseq(old[r], new[c]) then
                 C[r][c] = C[r-1][c-1] + 1;
             else
                 C[r][c] = C[r-1][c] > C[r][c-1] and C[r-1][c] or C[r][c-1]
@@ -269,14 +278,14 @@ local function lcs(old, new)
 end
 
 local function diff(old, new)
-    local C = lcs(old, new)
+    local C = lcs(old, new, equal)
 
     local r = C.rows
     local c = C.cols
     local path = {}
 
     while r > 0 and c > 0 do
-        if old[r] == new[c] then
+        if equal(old[r], new[c]) then
             table.insert(path, 1, {r, c, '='})
             r, c = r - 1, c - 1
         else
