@@ -300,7 +300,7 @@ local function diff(old, new)
     return path
 end
 
--- Display diff. Collection of action annotated lines ready to be displayed.
+-- Display diff. Collection of action-annotated lines ready to be displayed.
 local function ddiff(diffs, old, new)
     local lines = {}
     for _,e in ipairs(diffs) do
@@ -337,7 +337,7 @@ function M.set_diffs(bufnr, record)
     for _,e in ipairs(bdiff(diffs)) do
         if e[3] == '+' or e[3] == '-' then
             local hlgroup = e[3] == '+' and 'diffAdded' or 'diffRemoved'
-            vim.api.nvim_buf_set_extmark(bufnr, L.namespace, e[1], 0, {end_row = e[1]+1, hl_group = hlgroup , hl_eol=true})
+            vim.api.nvim_buf_set_extmark(bufnr, L.namespace, e[1], 0, {end_row = e[2]+1, hl_group = hlgroup , hl_eol=true})
         end
     end
 end

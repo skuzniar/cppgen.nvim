@@ -74,7 +74,7 @@ local function max_length(lines)
 end
 
 --- Diff preview window options, Record is a valid code/snippet entry.
-local function options(record)
+local function options(record, bufnr)
     local opts = {
         relative  = 'cursor',
         style     = 'minimal',
@@ -82,8 +82,8 @@ local function options(record)
         noautocmd = true,
         title     = 'Current vs Generated',
         title_pos = 'center',
-        width  = max_length(record.snip.lines),
-        height = #record.snip.lines,
+        width  = max_length(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)),
+        height = vim.api.nvim_buf_line_count(bufnr),
         anchor = 'NW',
         row    = 0,
         col    = string.len(record.code[1])
@@ -107,7 +107,7 @@ function M.preview(srec)
         if not val.same(srec) then
             L.buf = vim.api.nvim_create_buf(false, true)
             val.set_diffs(L.buf, srec)
-            L.win = vim.api.nvim_open_win(L.buf, false, options(srec))
+            L.win = vim.api.nvim_open_win(L.buf, false, options(srec, L.buf))
         end
     end
 end
