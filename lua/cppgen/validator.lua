@@ -37,17 +37,6 @@ vim.diagnostic.config({
     },
 }, L.namespace)
 
----------------------------------------------------------------------------------------------------
--- Global parameters for code generation.
--- TODO - get them from generator
----------------------------------------------------------------------------------------------------
-local G = {
-    require('cppgen.generators.class'),
-    require('cppgen.generators.enum'),
-    require('cppgen.generators.cereal'),
-    require('cppgen.generators.switch')
-}
-
 --- Exported functions
 local M = {}
 
@@ -143,7 +132,7 @@ end
 
 
 --- Scan current AST and invoke callback on nodes we think may be interesting
-local function visit_relevant_nodes(symbols, bufnr, callback)
+local function visit_relevant_nodes(symbols, bufnr)
     log.trace("Looking for relevant nodes")
     ast.dfs(symbols,
         function(node)
@@ -162,7 +151,6 @@ local function visit_relevant_nodes(symbols, bufnr, callback)
                         table.insert(L.results, {snip = snip, code = code, span = span, sign = sign})
                     end
                 end
-                callback(node)
             end
         end
     )
@@ -173,14 +161,7 @@ local function visit(symbols, bufnr)
     log.trace("visit:", "buffer", bufnr)
 
     L.results = {}
-    visit_relevant_nodes(symbols, bufnr,
-        function(node)
-            for _,g in pairs(G) do
-                -- TODO - is this needed?
-                g.validate(node)
-            end
-        end
-    )
+    visit_relevant_nodes(symbols, bufnr)
 
     vim.diagnostic.reset(L.namespace, 0)
 
@@ -357,7 +338,7 @@ function M.same(record)
 end
 
 -- Generated snippets picker
-local function snippets(opts)
+local function show_snippets(opts)
     opts = opts or {}
     pickers.new(opts, {
         prompt_title = 'Snippets',
@@ -425,11 +406,11 @@ function M.after_write(bufnr)
 end
 
 --- Compare existing and newly generated code in the buffer
-function M.validate()
+function M.show_snippets()
     --snippets(require("telescope.themes").get_ivy{})
     --snippets(require("telescope.themes").get_cursor{})
     --snippets(require("telescope.themes").get_dropdown{})
-    snippets()
+    show_snippets()
 end
 
 

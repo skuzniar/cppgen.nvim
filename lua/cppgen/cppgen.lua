@@ -106,7 +106,7 @@ end
 
 -- Show generated snippets
 local function show_snippets()
-    val.validate()
+    val.show_snippets()
 end
 
 -- Preview current snippet, only when different
