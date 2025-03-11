@@ -263,6 +263,8 @@ local function save_enum_snippet(node, alias)
     switch(lines, node, alias, G.json.enum.terse.value)
     table.insert(lines, apply('<indent>}'))
 
+    table.insert(lines, apply('<indent>return {};'))
+
     if G.keepindent then
         table.insert(lines, apply('<indent>// clang-format on'))
     end
