@@ -118,7 +118,7 @@ local function save_class_snippet(node, alias, friend)
     if friend then
         table.insert(lines, apply('friend <attribute> std::string <functionname>(const <classname>& o, bool verbose)'))
     else
-        table.insert(lines, apply('<attribute> std::string <functionname>(const <classname>& o, bool verbose)'))
+        table.insert(lines, apply('inline <attribute> std::string <functionname>(const <classname>& o, bool verbose)'))
     end
     table.insert(lines, apply('{'))
     if G.keepindent then
@@ -232,7 +232,7 @@ local function save_enum_snippet(node, alias)
 
     local lines = {}
 
-    table.insert(lines, apply('<attribute> std::string <functionname>(<classname> o, bool verbose)'))
+    table.insert(lines, apply('inline <attribute> std::string <functionname>(<classname> o, bool verbose)'))
     table.insert(lines, apply('{'))
 
     if G.keepindent then
