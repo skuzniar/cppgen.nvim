@@ -187,11 +187,14 @@ end
 
 --- Initialization callback
 function M.setup(opts)
+    L.enabled   = opts.validator.enabled
     L.attribute = opts.attribute
 
     -- Configure diagnostics
-    for name, sign in pairs(L.signs) do
-        vim.fn.sign_define(name, { texthl = sign.texthl, text = sign.text, numhl = "" })
+    if L.enabled then
+        for name, sign in pairs(L.signs) do
+            vim.fn.sign_define(name, { texthl = sign.texthl, text = sign.text, numhl = "" })
+        end
     end
 end
 
@@ -384,8 +387,10 @@ end
 
 --- LSP client attached callback
 function M.attached(client, bufnr)
-    log.info("Attached client", client.id, "buffer", bufnr)
-    L.lspclient = client
+    if L.enabled then
+        log.info("Attached client", client.id, "buffer", bufnr)
+        L.lspclient = client
+    end
     annotate(bufnr)
 end
 
@@ -401,8 +406,10 @@ end
 
 --- Wrote buffer
 function M.after_write(bufnr)
-    log.trace("Wrote buffer:", bufnr)
-    annotate(bufnr)
+    if L.enabled then
+        log.trace("Wrote buffer:", bufnr)
+        annotate(bufnr)
+    end
 end
 
 --- Compare existing and newly generated code in the buffer

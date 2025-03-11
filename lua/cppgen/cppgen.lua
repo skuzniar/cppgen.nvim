@@ -134,7 +134,9 @@ local function prev_different_snippet()
     nav.goto_prev(true)
 end
 
--- Dispatch table
+---------------------------------------------------------------------------------------------------
+-- User commands dispatch table
+---------------------------------------------------------------------------------------------------
 local calls =
 {
     help = show_help,

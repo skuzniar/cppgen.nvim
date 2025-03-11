@@ -225,9 +225,10 @@ end
 local function save_enum_snippet(node, alias)
     log.trace("save_enum_snippet:", ast.details(node))
 
-    P.attribute = G.attribute or ''
-    P.classname = alias and ast.name(alias) or ast.name(node)
-    P.indent    = string.rep(' ', vim.lsp.util.get_effective_tabstop())
+    P.attribute    = G.attribute or ''
+    P.classname    = alias and ast.name(alias) or ast.name(node)
+    P.functionname = G.json.name
+    P.indent       = string.rep(' ', vim.lsp.util.get_effective_tabstop())
 
     local lines = {}
 

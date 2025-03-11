@@ -39,6 +39,12 @@ M.default = {
     navigator = {
     },
 
+    -- Validator options.
+    validator = {
+        -- Disable if you find it annoying.
+        enabled = true
+    },
+
     -- Generated code can be decorated using an attribute. Set to empty string to disable.
     attribute = '[[cppgen::auto]]',
 
@@ -47,6 +53,9 @@ M.default = {
 
     -- Class type snippet generator.
     class = {
+        -- Enabled by default.
+        enabled = true,
+
         -- Output stream shift operator.
         shift = {
             -- String printed before any fields are printed.
@@ -70,6 +79,9 @@ M.default = {
 
     -- Enum type snippet generator.
     enum = {
+        -- Enabled by default.
+        enabled = true,
+
         -- Output stream shift operator.
         shift = {
             -- Given an enumerator and optional value, return the corresponding string.
@@ -149,6 +161,9 @@ M.default = {
 
     -- Serialization using cereal library.
     cereal = {
+        -- Enabled by default.
+        enabled = true,
+
         -- Class serialization options.
         class = {
             -- Field will be skipped if this function returns nil.
@@ -175,6 +190,9 @@ M.default = {
 
     -- Simple JSON serialization
     json = {
+        -- Enabled by default.
+        enabled = true,
+
         -- Class serialization options.
         class = {
             -- Field will be skipped if this function returns nil.
@@ -215,7 +233,7 @@ M.default = {
         -- Name of the conversion function. Also used as a completion trigger.
         name = "to_json",
         -- Additional completion trigger if present.
-        trigger = "tojson"
+        trigger = "to_json"
     },
 
     -- Switch statement generator.
