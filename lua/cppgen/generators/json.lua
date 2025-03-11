@@ -366,7 +366,7 @@ end
 
 function M.info()
     return {
-        { combine(G.json.name, G.json.trigger), "Class serialization into JSON" }
+        { combine(G.json.name, G.json.trigger), "Class and enum serialization into JSON" }
     }
 end
 
