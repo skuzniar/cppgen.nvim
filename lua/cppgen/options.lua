@@ -169,8 +169,53 @@ M.default = {
             -- Name of the conversion function. Also used as a completion trigger.
             name = "save",
             -- Additional completion trigger if present.
-            trigger = "json"
+            trigger = "arch"
         },
+    },
+
+    -- Simple JSON serialization
+    json = {
+        -- Class serialization options.
+        class = {
+            -- Field will be skipped if this function returns nil.
+            label = function(classname, fieldname, camelized)
+                return camelized
+            end,
+            value = function(fieldref, type)
+                return fieldref
+            end,
+            -- To disable null check, this function should return nil.
+            nullcheck = function(fieldref, type)
+                return nil
+            end,
+            -- If the null check succedes, this is the value that will be serialized. Return nil to skip the serialization.
+            nullvalue = function(fieldref, type)
+                return 'nullptr'
+            end,
+        },
+        -- Enum serialization options.
+        enum = {
+            terse = {
+                -- Given an enumerator and optional value, return the desired string.
+                value = function(enumerator, value)
+                    return value
+                end,
+            },
+            verbose = {
+                -- Given an enumerator and optional value, return the desired string.
+                value = function(enumerator, value)
+                    if (value) then
+                        return '"' .. value .. '(' .. enumerator .. ')' .. '"'
+                    else
+                        return enumerator
+                    end
+                end,
+            },
+        },
+        -- Name of the conversion function. Also used as a completion trigger.
+        name = "to_json",
+        -- Additional completion trigger if present.
+        trigger = "tojson"
     },
 
     -- Switch statement generator.

@@ -26,6 +26,7 @@ local G = {
     require('cppgen.generators.class'),
     require('cppgen.generators.enum'),
     require('cppgen.generators.cereal'),
+    require('cppgen.generators.json'),
     require('cppgen.generators.switch')
 }
 
