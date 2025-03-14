@@ -5,6 +5,30 @@ local log = require('cppgen.log')
 --- LSP utilities
 ---------------------------------------------------------------------------------------------------
 
+local M = {}
+
+---------------------------------------------------------------------------------------------------
+--- Get AST for the whole buffer and invoke callback on it.
+---------------------------------------------------------------------------------------------------
+function M.get_ast(client, callback, location)
+	local params = { textDocument = vim.lsp.util.make_text_document_params() }
+    if location then
+        params.textDocument.uri = location.uri
+    end
+    if client then
+        log.trace("Requesting AST for current buffer")
+	    client.request("textDocument/ast", params, function(err, symbols, _)
+            if err ~= nil then
+                log.error(err)
+            else
+                log.info("Received AST data with", (symbols and symbols.children and #symbols.children or 0), "top level nodes")
+                log.trace(symbols)
+                callback(symbols)
+		    end
+	    end)
+    end
+end
+
 --- Given a symbol tree, find a node whose definition starts at a given range
 local function get_type_definition_node(symbols, range)
     log.trace("get_type_definition_node:", "symbols", symbols, "range", range)
@@ -39,7 +63,6 @@ local function get_type_ast(client, location, callback)
         if err ~= nil then
             log.error(err)
         else
-            --log.debug("get_type_ast response:", symbols)
             local node = get_type_definition_node(symbols, location.range)
             if node then
                 callback(node)
@@ -47,8 +70,6 @@ local function get_type_ast(client, location, callback)
 	    end
 	end)
 end
-
-local M = {}
 
 --- Given a node, request the type information for it using supplied client and invoke the givan callback
 function M.get_type_definition(client, node, callback)

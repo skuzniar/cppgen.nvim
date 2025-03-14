@@ -1,5 +1,6 @@
 local log = require('cppgen.log')
 local ast = require('cppgen.ast')
+local lsp = require('cppgen.lsp')
 local gen = require('cppgen.generator')
 
 ---------------------------------------------------------------------------------------------------
@@ -200,19 +201,14 @@ end
 
 --- Annotate generated code in the buffer
 local function annotate(bufnr)
-	local params = { textDocument = vim.lsp.util.make_text_document_params() }
+    log.trace("annotate:", "buffer", bufnr)
     -- Should we clear first?
     if L.lspclient then
         vim.fn.sign_unplace(L.group, { buffer = bufnr })
-	    L.lspclient.request("textDocument/ast", params, function(err, symbols, _)
-            if err ~= nil then
-                log.error(err)
-            else
-                log.info("Received AST data with", (symbols and symbols.children and #symbols.children or 0), "top level nodes")
-                log.trace(symbols)
-                visit(symbols, bufnr)
-            end
-	    end)
+        lsp.get_ast(L.lspclient, function(symbols)
+            visit(symbols, bufnr)
+	    end
+        )
     end
 end
 

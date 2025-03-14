@@ -268,22 +268,13 @@ function M.insert_enter(bufnr)
 
     L.line = vim.api.nvim_win_get_cursor(0)[1] - 1
 
-	local params = { textDocument = vim.lsp.util.make_text_document_params() }
-    if L.lspclient then
-        log.trace("Requesting AST for buffer:", bufnr)
-	    L.lspclient.request("textDocument/ast", params, function(err, symbols, _)
-            if err ~= nil then
-                log.error(err)
-            else
-                log.info("Received AST data with", (symbols and symbols.children and #symbols.children or 0), "top level nodes")
-                log.trace(symbols)
-                -- We may have left insert mode by the time AST arrives
-                if L.line then
-                    M.visit(symbols, L.line)
-		        end
-		    end
-	    end)
-    end
+    lsp.get_ast(L.lspclient, function(symbols)
+        -- We may have left insert mode by the time AST arrives
+        if L.line then
+            M.visit(symbols, L.line)
+		end
+	end
+    )
 end
 
 --- Exiting insert mode.
