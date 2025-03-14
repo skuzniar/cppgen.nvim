@@ -14,11 +14,7 @@ local G = {}
 ---------------------------------------------------------------------------------------------------
 -- Local parameters for code generation.
 ---------------------------------------------------------------------------------------------------
-local P = {
-    dquote = "'" .. '"' .. "'",
-    colon  = "'" .. ':' .. "'",
-    comma  = "'" .. ',' .. "'",
-}
+local P = {}
 
 -- Calculate the longest length of labels and values
 local function max_lengths(records)
@@ -34,26 +30,10 @@ end
 
 -- Apply parameters to the format string 
 local function apply(format)
-    local result  = format
+    format = string.gsub(format, "<nullcheck>", P.nullcheck or '')
+    format = string.gsub(format, "<nullvalue>", P.nullvalue or '')
 
-    result = string.gsub(result, "<label>",        P.label        or '')
-    result = string.gsub(result, "<labelpad>",     P.labelpad     or '')
-    result = string.gsub(result, "<value>",        P.value        or '')
-    result = string.gsub(result, "<valuepad>",     P.valuepad     or '')
-    result = string.gsub(result, "<specifier>",    P.specifier    or '')
-    result = string.gsub(result, "<attribute>",    P.attribute    or '')
-    result = string.gsub(result, "<classname>",    P.classname    or '')
-    result = string.gsub(result, "<functionname>", P.functionname or '')
-    result = string.gsub(result, "<fieldname>",    P.fieldname    or '')
-    result = string.gsub(result, "<indent>",       P.indent       or '')
-    result = string.gsub(result, "<dquote>",       P.dquote       or '')
-    result = string.gsub(result, "<colon>",        P.colon        or '')
-    result = string.gsub(result, "<comma>",        P.comma        or '')
-
-    result = string.gsub(result, "<nullcheck>",    P.nullcheck    or '')
-    result = string.gsub(result, "<nullvalue>",    P.nullvalue    or '')
-
-    return result;
+    return utl.apply(P, format)
 end
 
 -- Collect names and values for a class type node.
@@ -263,7 +243,7 @@ local function save_enum_snippet(node, alias)
     switch(lines, node, alias, G.json.enum.terse.value)
     table.insert(lines, apply('<indent>}'))
 
-    table.insert(lines, apply('<indent>return {};'))
+    table.insert(lines, apply('<indent>return <functionname>("", verbose);'))
 
     if G.keepindent then
         table.insert(lines, apply('<indent>// clang-format on'))

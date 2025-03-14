@@ -91,4 +91,35 @@ function M.flatten(...)
     return items
 end
 
+---------------------------------------------------------------------------------------------------
+-- Apply parameters to the format string 
+---------------------------------------------------------------------------------------------------
+function M.apply(sub, str)
+    local squote = '"' .. "'" .. '"'
+    local dquote = "'" .. '"' .. "'"
+    local colon  = "'" .. ':' .. "'"
+    local comma  = "'" .. ',' .. "'"
+
+    local result  = str
+
+    result = string.gsub(result, "<label>",        sub['label']        or '')
+    result = string.gsub(result, "<labelpad>",     sub['labelpad']     or '')
+    result = string.gsub(result, "<value>",        sub['value']        or '')
+    result = string.gsub(result, "<valuepad>",     sub['valuepad']     or '')
+    result = string.gsub(result, "<specifier>",    sub['specifier']    or '')
+    result = string.gsub(result, "<attribute>",    sub['attribute']    or '')
+    result = string.gsub(result, "<classname>",    sub['classname']    or '')
+    result = string.gsub(result, "<functionname>", sub['functionname'] or '')
+    result = string.gsub(result, "<fieldname>",    sub['fieldname']    or '')
+    result = string.gsub(result, "<indent>",       sub['indent']       or '')
+    result = string.gsub(result, "<separator>",    sub['separator']    or '')
+
+    result = string.gsub(result, "<squote>",       sub['squote']       or squote)
+    result = string.gsub(result, "<dquote>",       sub['dquote']       or dquote)
+    result = string.gsub(result, "<colon>",        sub['colon']        or colon)
+    result = string.gsub(result, "<comma>",        sub['comma']        or comma)
+
+    return result;
+end
+
 return M

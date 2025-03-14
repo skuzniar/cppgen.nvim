@@ -18,24 +18,11 @@ local P = {}
 
 -- Apply parameters to the format string 
 local function apply(format)
-    local result  = format
+    format = string.gsub(format, "<errortype>",    P.errortype    or '')
+    format = string.gsub(format, "<error>",        P.error        or '')
+    format = string.gsub(format, "<exception>",    P.exception    or '')
 
-    result = string.gsub(result, "<label>",        P.label        or '')
-    result = string.gsub(result, "<labelpad>",     P.labelpad     or '')
-    result = string.gsub(result, "<value>",        P.value        or '')
-    result = string.gsub(result, "<valuepad>",     P.valuepad     or '')
-    result = string.gsub(result, "<specifier>",    P.specifier    or '')
-    result = string.gsub(result, "<attribute>",    P.attribute    or '')
-    result = string.gsub(result, "<classname>",    P.classname    or '')
-    result = string.gsub(result, "<functionname>", P.functionname or '')
-    result = string.gsub(result, "<fieldname>",    P.fieldname    or '')
-    result = string.gsub(result, "<separator>",    P.separator    or '')
-    result = string.gsub(result, "<indent>",       P.indent       or '')
-    result = string.gsub(result, "<errortype>",    P.errortype    or '')
-    result = string.gsub(result, "<error>",        P.error        or '')
-    result = string.gsub(result, "<exception>",    P.exception    or '')
-
-    return result;
+    return utl.apply(P, format)
 end
 
 -- Collect names and values for an enum type node. Labels are fixed, values are calculated.
