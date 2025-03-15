@@ -193,7 +193,7 @@ local function enum_labels_and_values(node, alias, vf)
     for _,r in ipairs(utl.enum_records(node)) do
         local record = {}
         record.label = (alias and ast.name(alias) or ast.name(node)) .. '::' .. r.label
-        record.value = vf(r.label, r.value)
+        record.value = vf(r.label, r.value) or r.label
         table.insert(lsandvs, record)
     end
     return lsandvs
