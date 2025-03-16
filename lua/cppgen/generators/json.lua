@@ -220,28 +220,48 @@ local function save_enum_snippet(node, alias)
     end
 
     -- Helper function to generate switch statement
-    local function switch(lines, node, alias, valuef)
-        table.insert(lines, apply('<indent><indent>switch(o)'))
-        table.insert(lines, apply('<indent><indent>{'))
+    local function switch(lines, records, extra)
+        local indent = extra and '<indent>' or ''
 
-        local records = enum_labels_and_values(node, alias, valuef)
+        table.insert(lines, apply(indent .. '<indent>switch(o)'))
+        table.insert(lines, apply(indent .. '<indent>{'))
+
         local maxllen, maxvlen = max_lengths(records)
         for _,r in ipairs(records) do
             P.label     = r.label
             P.value     = r.value
             P.labelpad  = string.rep(' ', maxllen - string.len(r.label))
             P.valuepad  = string.rep(' ', maxvlen - string.len(r.value))
-            table.insert(lines, apply('<indent><indent><indent>case <label>:<labelpad> return <functionname>(<value><valuepad>, verbose); break;'))
+            table.insert(lines, apply(indent .. '<indent><indent>case <label>:<labelpad> return <functionname>(<value><valuepad>, verbose); break;'))
         end
-        table.insert(lines, apply('<indent><indent>};'))
+        table.insert(lines, apply(indent .. '<indent>};'))
     end
 
-    -- Verbose and terse versions
-    table.insert(lines, apply('<indent>if (verbose) {'))
-    switch(lines, node, alias, G.json.enum.verbose.value)
-    table.insert(lines, apply('<indent>} else {'))
-    switch(lines, node, alias, G.json.enum.terse.value)
-    table.insert(lines, apply('<indent>}'))
+    --- Compare labels and values
+    local function same(lhs, rhs)
+        if #lhs == #rhs then
+            for i=1,#lhs do
+                if lhs[i].label ~= rhs[i].label or lhs[i].value ~= rhs[i].value then
+                    return false
+                end
+            end
+            return true
+        end
+        return false
+    end
+
+    local vrecords = enum_labels_and_values(node, alias, G.json.enum.verbose.value)
+    local trecords = enum_labels_and_values(node, alias, G.json.enum.terse.value)
+
+    if (same(vrecords, trecords)) then
+        switch(lines, vrecords)
+    else
+        table.insert(lines, apply('<indent>if (verbose) {'))
+        switch(lines, vrecords, true)
+        table.insert(lines, apply('<indent>} else {'))
+        switch(lines, trecords, true)
+        table.insert(lines, apply('<indent>}'))
+    end
 
     table.insert(lines, apply('<indent>return <functionname>("", verbose);'))
 
