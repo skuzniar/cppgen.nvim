@@ -1,5 +1,7 @@
 local ast = require('cppgen.ast')
+local lsp = require('cppgen.lsp')
 local log = require('cppgen.log')
+local utl = require('cppgen.generators.util')
 
 ---------------------------------------------------------------------------------------------------
 -- Switch statement generator.
@@ -16,25 +18,14 @@ local G = {}
 local P = {}
 
 -- Capture parameters
-local lspclient                 = nil
-local condition_reference_node  = nil
-local condition_definition_node = nil
+local lspclient          = nil
+local condition_ref_node = nil
+local condition_def_node = nil
 
 -- Apply parameters to the format string 
 local function apply(format)
-    local result  = format
-
-    result = string.gsub(result, "<label>",     P.label     or '')
-    result = string.gsub(result, "<labelpad>",  P.labelpad  or '')
-    result = string.gsub(result, "<value>",     P.value     or '')
-    result = string.gsub(result, "<valuepad>",  P.valuepad  or '')
-    result = string.gsub(result, "<specifier>", P.specifier or '')
-    result = string.gsub(result, "<classname>", P.classname or '')
-    result = string.gsub(result, "<fieldname>", P.fieldname or '')
-    result = string.gsub(result, "<indent>",    P.indent    or '')
-    result = string.gsub(result, "<default>",   P.default   or '')
-
-    return result;
+    format = string.gsub(format, "<default>",   P.default   or '')
+    return utl.apply(P, format)
 end
 
 -- Collect names and values for an enum type node.
@@ -90,7 +81,7 @@ local function case_enum_snippet(node)
         table.insert(lines, apply('<indent>break;'))
     end
 
-    P.default = G.switch.enum.default(ast.name(node), ast.name(condition_reference_node))
+    P.default = G.switch.enum.default(ast.name(node), ast.name(condition_ref_node))
     if P.default then
         table.insert(lines, apply('default:'))
         table.insert(lines, apply('<indent><default>;'))
@@ -129,69 +120,6 @@ local function get_switch_condition_node(node)
     return cond
 end
 
---- Given a symbol tree, find a node whose definition starts at a given range
-local function get_type_definition_node(symbols, range)
-    log.trace("get_type_definition_node:", "symbols", symbols, "range", range)
-
-    local node = nil
-    ast.dfs(symbols,
-        function(_)
-            return not node
-        end,
-        function(n)
-            if n.range and n.range['start'].line == range['start'].line then
-                node = n
-            end
-        end
-        )
-    log.trace("get_type_definition_node:", node)
-    return node
-end
-
---- Given a condition node location, request the AST for it
-local function get_switch_condition_type_ast(location)
-    log.trace("get_switch_condition_type_ast:", location)
-
-	local params = { textDocument = vim.lsp.util.make_text_document_params() }
-    params.textDocument.uri = location.uri
-
-    -- In case the definition is in different file
-    local cb = vim.api.nvim_get_current_buf()
-    vim.cmd.edit(location.uri)
-    vim.api.nvim_set_current_buf(cb)
-
-    if lspclient then
-	    lspclient.request("textDocument/ast", params, function(err, symbols, _)
-            if err ~= nil then
-                log.error(err)
-            else
-                condition_definition_node = get_type_definition_node(symbols, location.range)
-		    end
-	    end)
-    end
-end
-
---- Given a condition node, request the type for it
-local function get_switch_condition_type_definition(node)
-    log.trace("get_switch_condition_type_definition:", ast.details(node))
-
-    local params = vim.lsp.util.make_position_params();
-
-    params.position.line      = node.range.start.line
-    params.position.character = node.range.start.character
-    log.trace("get_switch_condition_type_definition:", "params", params)
-
-    if lspclient then
-	    lspclient.request("textDocument/typeDefinition", params, function(err, symbols, _)
-            if err ~= nil then
-                log.error(err)
-            else
-                get_switch_condition_type_ast(symbols[1])
-		    end
-	    end)
-    end
-end
-
 local M = {}
 
 ---------------------------------------------------------------------------------------------------
@@ -214,8 +142,8 @@ end
 --- Generator will call this method before presenting a set of new candidate nodes
 ---------------------------------------------------------------------------------------------------
 function M.reset()
-    condition_reference_node  = nil
-    condition_definition_node = nil
+    condition_ref_node  = nil
+    condition_def_node = nil
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -226,9 +154,12 @@ function M.visit(node, alias, location)
     if location == ast.Encloses and is_switch(node) then
         local cond = get_switch_condition_node(node)
         if cond then
-            log.trace("visit:", "condition node", ast.details(cond))
-            condition_reference_node = cond
-            get_switch_condition_type_definition(cond)
+            log.debug("visit:", "condition node", ast.details(cond))
+            condition_ref_node = cond
+            lsp.get_type_definition(lspclient, cond, function(n)
+                log.debug("visit:", "def node", ast.details(n))
+                condition_def_node = n
+            end)
         end
     end
 end
@@ -237,19 +168,19 @@ end
 --- Generator will call this method to check if the module can generate code
 ---------------------------------------------------------------------------------------------------
 function M.available()
-    return condition_definition_node ~= nil
+    return condition_def_node ~= nil
 end
 
 ---------------------------------------------------------------------------------------------------
 -- Generate from string functions for an enum nodes.
 ---------------------------------------------------------------------------------------------------
 function M.generate(strict)
-    log.trace("generate:", ast.details(condition_definition_node))
+    log.trace("generate:", ast.details(condition_def_node))
 
     local items = {}
 
-    if ast.is_enum(condition_definition_node) then
-        table.insert(items, case_enum_item(condition_definition_node))
+    if ast.is_enum(condition_def_node) then
+        table.insert(items, case_enum_item(condition_def_node))
     end
 
     return items
@@ -268,7 +199,7 @@ end
 --- Initialization callback
 ---------------------------------------------------------------------------------------------------
 function M.setup(opts)
-    G.switch     = opts.switch
+    G.switch = opts.switch
 end
 
 return M

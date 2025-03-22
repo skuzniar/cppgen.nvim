@@ -238,6 +238,9 @@ M.default = {
 
     -- Switch statement generator.
     switch = {
+        -- Enabled by default.
+        enabled = true,
+
         -- Switch on enums.
         enum = {
             -- Part that will go between case and break.
