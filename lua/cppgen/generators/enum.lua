@@ -366,33 +366,34 @@ local function shift_snippet(node, alias, specifier)
 
     table.insert(lines, apply('<specifier><attribute> std::ostream& operator<<(std::ostream& s, <classname> o)'))
     table.insert(lines, apply('{'))
-    table.insert(lines, apply('<indent>switch(o)'))
-    table.insert(lines, apply('<indent>{'))
-    if G.keepindent then
-        table.insert(lines, apply('<indent><indent>// clang-format off'))
-    end
 
-    for _,r in ipairs(records) do
-        P.label     = r.label
-        P.value     = r.value
-        P.labelpad  = string.rep(' ', maxllen - string.len(r.label))
-        P.valuepad  = string.rep(' ', maxvlen - string.len(r.value))
-        table.insert(lines, apply('<indent><indent>case <label>:<labelpad> s << <value>;<valuepad> break;'))
-    end
-
-    if G.enum.shift.default then
-        P.default = G.enum.shift.default(P.classname, 'o')
-        if P.default then
-            table.insert(lines, apply('<indent><indent>default: s << <default>; break;'))
+    if G.enum.shift.to_string then
+        table.insert(lines, apply('<indent>return s << to_string(o);'))
+    else
+        table.insert(lines, apply('<indent>switch(o)'))
+        table.insert(lines, apply('<indent>{'))
+        if G.keepindent then
+            table.insert(lines, apply('<indent><indent>// clang-format off'))
         end
+        for _,r in ipairs(records) do
+            P.label     = r.label
+            P.value     = r.value
+            P.labelpad  = string.rep(' ', maxllen - string.len(r.label))
+            P.valuepad  = string.rep(' ', maxvlen - string.len(r.value))
+            table.insert(lines, apply('<indent><indent>case <label>:<labelpad> s << <value>;<valuepad> break;'))
+        end
+        if G.enum.shift.default then
+            P.default = G.enum.shift.default(P.classname, 'o')
+            if P.default then
+                table.insert(lines, apply('<indent><indent>default: s << <default>; break;'))
+            end
+        end
+        if G.keepindent then
+            table.insert(lines, apply('<indent><indent>// clang-format on'))
+        end
+        table.insert(lines, apply('<indent>};'))
+        table.insert(lines, apply('<indent>return s;'))
     end
-
-    if G.keepindent then
-        table.insert(lines, apply('<indent><indent>// clang-format on'))
-    end
-    table.insert(lines, apply('<indent>};'))
-
-    table.insert(lines, apply('<indent>return s;'))
     table.insert(lines, apply('}'))
 
     for _,l in ipairs(lines) do log.debug(l) end

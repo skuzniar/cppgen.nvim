@@ -96,6 +96,8 @@ M.default = {
             default = function(classname, value)
                 return 'std::to_string(static_cast<std::underlying_type_t<'..classname..'>>(' .. value .. ')) + "(Invalid ' .. classname .. ')"'
             end,
+            -- May use to_string function
+            to_string = false,
             -- Completion trigger. Will also use the first word of the function definition line.
             trigger = "shift"
         },
