@@ -23,11 +23,11 @@ that it gets from the LSP server to generate code.
 - Enumeration switch statements.
 
 ## Dependencies
-- [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
-- [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)
+- [nvim-cmp](https:ithub.com/hrsh7th/nvim-cmp)
+- [nvim-lspconfig](https:ithub.com/neovim/nvim-lspconfig)
 
 ## Installation
-**Using [lazy.nvim](https://github.com/folke/lazy.nvim):**
+**Using [lazy.nvim](https:ithub.com/folke/lazy.nvim):**
 ```lua
 {
     "skuzniar/cppgen.nvim",
@@ -80,12 +80,22 @@ Some aspects of code generation can be customized using options. Here are the de
     log = {
         -- Name of the log file.
         plugin = 'cppgen',
-        -- Log level.
+        -- Log level
         level = 'info',
         -- Do not print to console.
         use_console = false,
         -- Truncate log file on start.
-        truncate = true
+        truncate = false
+    },
+
+    -- Navigation options.
+    navigator = {
+    },
+
+    -- Validator options.
+    validator = {
+        -- Disable if you find it annoying.
+        enabled = true
     },
 
     -- Generated code can be decorated using an attribute. Set to empty string to disable.
@@ -96,6 +106,9 @@ Some aspects of code generation can be customized using options. Here are the de
 
     -- Class type snippet generator.
     class = {
+        -- Enabled by default.
+        enabled = true,
+
         -- Output stream shift operator.
         shift = {
             -- String printed before any fields are printed.
@@ -119,6 +132,9 @@ Some aspects of code generation can be customized using options. Here are the de
 
     -- Enum type snippet generator.
     enum = {
+        -- Enabled by default.
+        enabled = true,
+
         -- Output stream shift operator.
         shift = {
             -- Given an enumerator and optional value, return the corresponding string.
@@ -129,10 +145,16 @@ Some aspects of code generation can be customized using options. Here are the de
                     return '"' .. enumerator .. '"'
                 end
             end,
+            --  Expression for the default case. If nil, no default case will be generated.
+            default = function(classname, value)
+                return 'std::to_string(static_cast<std::underlying_type_t<'..classname..'>>(' .. value .. ')) + "(Invalid ' .. classname .. ')"'
+            end,
+            -- May use to_string function
+            to_string = false,
             -- Completion trigger. Will also use the first word of the function definition line.
             trigger = "shift"
         },
-        -- To string conversion function: std::string to_string(enum e)
+        -- To string conversion function: std::string to_string(enum e).
         to_string = {
             -- Given an enumerator and optional value, return the corresponding string.
             value = function(enumerator, value)
@@ -142,9 +164,13 @@ Some aspects of code generation can be customized using options. Here are the de
                     return '"' .. enumerator .. '"'
                 end
             end,
+            --  Expression for the default case. If nil, no default case will be generated.
+            default = function(classname, value)
+                return 'std::to_string(static_cast<std::underlying_type_t<'..classname..'>>(' .. value .. ')) + "(Invalid ' .. classname .. ')"'
+            end,
             -- Name of the conversion function. Also used as a completion trigger.
             name = "to_string",
-            -- Additional completion trigger if present
+            -- Additional completion trigger if present.
             trigger = "to_string"
         },
         -- Enum cast functions. Conversions from various types into enum.
@@ -171,7 +197,7 @@ Some aspects of code generation can be customized using options. Here are the de
             },
             -- From integer conversion function. Matches enumerator value. Specializations of: template <typename T, typename F> T enum_cast(F f).
             value_cast = {
-                -- Exception expression thrown if conversion fails
+                -- Exception expression thrown if conversion fails.
                 exception = function(classname, value)
                     return 'std::out_of_range("Value " + std::to_string(' .. value .. ') + " is outside of ' .. classname .. ' enumeration range.")'
                 end,
@@ -198,6 +224,9 @@ Some aspects of code generation can be customized using options. Here are the de
 
     -- Serialization using cereal library.
     cereal = {
+        -- Enabled by default.
+        enabled = true,
+
         -- Class serialization options.
         class = {
             -- Field will be skipped if this function returns nil.
@@ -218,12 +247,63 @@ Some aspects of code generation can be customized using options. Here are the de
             -- Name of the conversion function. Also used as a completion trigger.
             name = "save",
             -- Additional completion trigger if present.
-            trigger = "json"
+            trigger = "arch"
         },
+    },
+
+    -- Simple JSON serialization
+    json = {
+        -- Enabled by default.
+        enabled = true,
+
+        -- Class serialization options.
+        class = {
+            -- Field will be skipped if this function returns nil.
+            label = function(classname, fieldname, camelized)
+                return camelized
+            end,
+            value = function(fieldref, type)
+                return fieldref
+            end,
+            -- To disable null check, this function should return nil.
+            nullcheck = function(fieldref, type)
+                return nil
+            end,
+            -- If the null check succedes, this is the value that will be serialized. Return nil to skip the serialization.
+            nullvalue = function(fieldref, type)
+                return 'nullptr'
+            end,
+        },
+        -- Enum serialization options.
+        enum = {
+            terse = {
+                -- Given an enumerator and optional value, return the desired string.
+                value = function(enumerator, value)
+                    return value
+                end,
+            },
+            verbose = {
+                -- Given an enumerator and optional value, return the desired string.
+                value = function(enumerator, value)
+                    if (value) then
+                        return '"' .. value .. '(' .. enumerator .. ')' .. '"'
+                    else
+                        return enumerator
+                    end
+                end,
+            },
+        },
+        -- Name of the conversion function. Also used as a completion trigger.
+        name = "to_json",
+        -- Additional completion trigger if present.
+        trigger = "to_json"
     },
 
     -- Switch statement generator.
     switch = {
+        -- Enabled by default.
+        enabled = true,
+
         -- Switch on enums.
         enum = {
             -- Part that will go between case and break.
@@ -234,7 +314,7 @@ Some aspects of code generation can be customized using options. Here are the de
             default = function(classname, value)
                 return '// "Value " + std::to_string(' .. value .. ') + " is outside of ' .. classname .. ' enumeration range."'
             end,
-            -- Completion trigger..
+            -- Completion trigger.
             trigger = "case"
         },
     }
