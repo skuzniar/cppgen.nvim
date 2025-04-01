@@ -92,6 +92,10 @@ M.default = {
                     return '"' .. enumerator .. '"'
                 end
             end,
+            --  Expression for the default case. If nil, no default case will be generated.
+            default = function(classname, value)
+                return 'std::to_string(static_cast<std::underlying_type_t<'..classname..'>>(' .. value .. ')) + "(Invalid ' .. classname .. ')"'
+            end,
             -- Completion trigger. Will also use the first word of the function definition line.
             trigger = "shift"
         },
@@ -104,6 +108,10 @@ M.default = {
                 else
                     return '"' .. enumerator .. '"'
                 end
+            end,
+            --  Expression for the default case. If nil, no default case will be generated.
+            default = function(classname, value)
+                return 'std::to_string(static_cast<std::underlying_type_t<'..classname..'>>(' .. value .. ')) + "(Invalid ' .. classname .. ')"'
             end,
             -- Name of the conversion function. Also used as a completion trigger.
             name = "to_string",

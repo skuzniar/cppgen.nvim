@@ -18,9 +18,10 @@ local P = {}
 
 -- Apply parameters to the format string 
 local function apply(format)
-    format = string.gsub(format, "<errortype>",    P.errortype    or '')
-    format = string.gsub(format, "<error>",        P.error        or '')
-    format = string.gsub(format, "<exception>",    P.exception    or '')
+    format = string.gsub(format, "<errortype>", P.errortype or '')
+    format = string.gsub(format, "<error>",     P.error     or '')
+    format = string.gsub(format, "<exception>", P.exception or '')
+    format = string.gsub(format, "<default>",   P.default   or '')
 
     return utl.apply(P, format)
 end
@@ -86,6 +87,13 @@ local function to_string_snippet(node, alias, specifier)
         P.labelpad  = string.rep(' ', maxllen - string.len(r.label))
         P.valuepad  = string.rep(' ', maxvlen - string.len(r.value))
         table.insert(lines, apply('<indent><indent>case <label>:<labelpad> return <value>;<valuepad> break;'))
+    end
+
+    if G.enum.to_string.default then
+        P.default = G.enum.to_string.default(P.classname, 'o')
+        if P.default then
+            table.insert(lines, apply('<indent><indent>default: return <default>; break;'))
+        end
     end
 
     if G.keepindent then
@@ -370,6 +378,13 @@ local function shift_snippet(node, alias, specifier)
         P.labelpad  = string.rep(' ', maxllen - string.len(r.label))
         P.valuepad  = string.rep(' ', maxvlen - string.len(r.value))
         table.insert(lines, apply('<indent><indent>case <label>:<labelpad> s << <value>;<valuepad> break;'))
+    end
+
+    if G.enum.shift.default then
+        P.default = G.enum.shift.default(P.classname, 'o')
+        if P.default then
+            table.insert(lines, apply('<indent><indent>default: s << <default>; break;'))
+        end
     end
 
     if G.keepindent then
