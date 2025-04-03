@@ -214,7 +214,7 @@ M.default = {
             end,
             -- To disable null check, this function should return nil.
             nullcheck = function(fieldref, type)
-                return nil
+                return fieldref == 'Null' or fieldref == 'null' or fieldref == 'nullvalue'
             end,
             -- If the null check succedes, this is the value that will be serialized. Return nil to skip the serialization.
             nullvalue = function(fieldref, type)
@@ -226,7 +226,7 @@ M.default = {
             terse = {
                 -- Given an enumerator and optional value, return the desired string.
                 value = function(enumerator, value)
-                    return value
+                    return (enumerator == 'Null' or enumerator == 'null' or enumerator == 'nullvalue') and 'nullptr' or value
                 end,
                 --  Expression for the default case. If nil, no default case will be generated.
                 default = function(classname, value)
@@ -236,6 +236,9 @@ M.default = {
             verbose = {
                 -- Given an enumerator and optional value, return the desired string.
                 value = function(enumerator, value)
+                    if enumerator == 'Null' or enumerator == 'null' or enumerator == 'nullvalue' then
+                        return 'nullptr'
+                    end
                     if (value) then
                         return '"' .. value .. '(' .. enumerator .. ')' .. '"'
                     else
