@@ -228,6 +228,10 @@ M.default = {
                 value = function(enumerator, value)
                     return value
                 end,
+                --  Expression for the default case. If nil, no default case will be generated.
+                default = function(classname, value)
+                    return 'static_cast<std::underlying_type_t<'..classname..'>>(' .. value .. ')'
+                end,
             },
             verbose = {
                 -- Given an enumerator and optional value, return the desired string.
@@ -237,6 +241,10 @@ M.default = {
                     else
                         return enumerator
                     end
+                end,
+                --  Expression for the default case. If nil, no default case will be generated.
+                default = function(classname, value)
+                    return 'std::to_string(static_cast<std::underlying_type_t<'..classname..'>>(' .. value .. ')) + "(Invalid ' .. classname .. ')"'
                 end,
             },
         },

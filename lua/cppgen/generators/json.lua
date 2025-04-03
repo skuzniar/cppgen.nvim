@@ -32,6 +32,7 @@ end
 local function apply(format)
     format = string.gsub(format, "<nullcheck>", P.nullcheck or '')
     format = string.gsub(format, "<nullvalue>", P.nullvalue or '')
+    format = string.gsub(format, "<default>",   P.default   or '')
 
     return utl.apply(P, format)
 end
@@ -220,8 +221,8 @@ local function save_enum_snippet(node, alias)
     end
 
     -- Helper function to generate switch statement
-    local function switch(lines, records, extra)
-        local indent = extra and '<indent>' or ''
+    local function switch(lines, records, default, extraindent)
+        local indent = extraindent and '<indent>' or ''
 
         table.insert(lines, apply(indent .. '<indent>switch(o)'))
         table.insert(lines, apply(indent .. '<indent>{'))
@@ -234,6 +235,12 @@ local function save_enum_snippet(node, alias)
             P.valuepad  = string.rep(' ', maxvlen - string.len(r.value))
             table.insert(lines, apply(indent .. '<indent><indent>case <label>:<labelpad> return <functionname>(<value><valuepad>, verbose); break;'))
         end
+
+        if default then
+            P.default = default
+            table.insert(lines, apply(indent .. '<indent><indent>default: return <functionname>(<default>, verbose); break;'))
+        end
+
         table.insert(lines, apply(indent .. '<indent>};'))
     end
 
@@ -253,13 +260,16 @@ local function save_enum_snippet(node, alias)
     local vrecords = enum_labels_and_values(node, alias, G.json.enum.verbose.value)
     local trecords = enum_labels_and_values(node, alias, G.json.enum.terse.value)
 
+    local vdefault = G.json.enum.verbose.default and G.json.enum.verbose.default(P.classname, 'o')
+    local tdefault = G.json.enum.terse.default   and G.json.enum.terse.default(P.classname, 'o')
+
     if (same(vrecords, trecords)) then
-        switch(lines, vrecords)
+        switch(lines, vrecords, vdefault)
     else
         table.insert(lines, apply('<indent>if (verbose) {'))
-        switch(lines, vrecords, true)
+        switch(lines, vrecords, vdefault, true)
         table.insert(lines, apply('<indent>} else {'))
-        switch(lines, trecords, true)
+        switch(lines, trecords, tdefault, true)
         table.insert(lines, apply('<indent>}'))
     end
 
