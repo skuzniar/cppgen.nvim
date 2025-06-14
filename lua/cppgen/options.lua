@@ -35,6 +35,16 @@ M.default = {
         truncate = false
     },
 
+    -- Navigation options.
+    navigator = {
+    },
+
+    -- Validator options.
+    validator = {
+        -- Disable if you find it annoying.
+        enabled = true
+    },
+
     -- Generated code can be decorated using an attribute. Set to empty string to disable.
     attribute = '[[cppgen::auto]]',
 
