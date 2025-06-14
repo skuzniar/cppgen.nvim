@@ -1,7 +1,5 @@
 local log = require('cppgen.log')
 local gen = require('cppgen.generator')
-local val = require('cppgen.validator')
-local nav = require('cppgen.navigator')
 
 ---------------------------------------------------------------------------------------------------
 -- Code generation module. Forwards events to the code completion module
@@ -13,8 +11,6 @@ local M = {}
 ---------------------------------------------------------------------------------------------------
 function M.setup(opts)
     gen.setup(opts)
-    val.setup(opts)
-    nav.setup(opts)
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -23,8 +19,6 @@ end
 function M.attached(client, bufnr)
     log.trace("Attached client", client.id, "buffer", bufnr)
 	gen.attached(client, bufnr)
-	val.attached(client, bufnr)
-	nav.attached(client, bufnr)
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -33,8 +27,6 @@ end
 function M.insert_enter(bufnr)
     log.trace("Entered insert mode buffer:", bufnr)
 	gen.insert_enter(bufnr)
-	val.insert_enter(bufnr)
-	nav.insert_enter(bufnr)
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -43,8 +35,6 @@ end
 function M.insert_leave(bufnr)
     log.trace("Exited insert mode buffer:", bufnr)
 	gen.insert_leave(bufnr)
-	val.insert_leave(bufnr)
-	nav.insert_leave(bufnr)
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -53,8 +43,6 @@ end
 function M.after_write(bufnr)
     log.trace("Wrote buffer:", bufnr)
 	gen.after_write(bufnr)
-	val.after_write(bufnr)
-	nav.after_write(bufnr)
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -104,48 +92,12 @@ local function show_help()
     end
 end
 
--- Show generated snippets
-local function show_snippets()
-    val.show_snippets()
-end
-
--- Preview current snippet, only when different
-local function preview()
-    nav.preview(nav.get_enclosing(true))
-end
-
--- Go the the next snippet
-local function next_snippet()
-    nav.goto_next(false)
-end
-
--- Go the the next different snippet
-local function next_different_snippet()
-    nav.goto_next(true)
-end
-
--- Go the the previous snippet
-local function prev_snippet()
-    nav.goto_prev(false)
-end
-
--- Go the the previous different snippet
-local function prev_different_snippet()
-    nav.goto_prev(true)
-end
-
 ---------------------------------------------------------------------------------------------------
 -- User commands dispatch table
 ---------------------------------------------------------------------------------------------------
 local calls =
 {
     help = show_help,
-    show = show_snippets,
-    next = next_snippet,
-    Next = next_different_snippet,
-    prev = prev_snippet,
-    Prev = prev_different_snippet,
-    view = preview,
 }
 
 local function get_keys(t)
