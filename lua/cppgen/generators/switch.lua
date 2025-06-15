@@ -191,7 +191,7 @@ end
 ---------------------------------------------------------------------------------------------------
 function M.info()
     return {
-        { G.switch.enum.trigger, "Case switch statements" }
+        { G.switch.enum.trigger, "Case switch statements from enumeration" }
     }
 end
 

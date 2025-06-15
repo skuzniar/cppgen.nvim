@@ -515,16 +515,16 @@ function M.info()
 
     local trigger = combine(G.enum.cast.name, G.enum.cast.trigger)
     if G.enum.cast.enum_cast.enabled then
-        table.insert(info, { trigger, "Throwing version of enum class from string converter" })
+        table.insert(info, { trigger, "Throwing constructot of enum class from string" })
     end
     if G.enum.cast.enum_cast_no_throw.enabled then
-        table.insert(info, { trigger, "Non throwing version of enum class from string converter" })
+        table.insert(info, { trigger, "Non throwing constructot of enum class from string" })
     end
     if G.enum.cast.value_cast.enabled then
-        table.insert(info, { trigger, "Throwing version of enum class from the underlying type converter" })
+        table.insert(info, { trigger, "Throwing constructot of enum class from the underlying type" })
     end
     if G.enum.cast.value_cast_no_throw.enabled then
-        table.insert(info, { trigger, "Non throwing version of enum class from the underlying type converter" })
+        table.insert(info, { trigger, "Non throwing constructot of enum class from the underlying type" })
     end
 
     table.insert(info, { G.enum.shift.trigger, "Enum class output stream shift operator" })

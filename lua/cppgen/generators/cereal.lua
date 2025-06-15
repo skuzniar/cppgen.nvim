@@ -255,7 +255,7 @@ end
 
 function M.info()
     return {
-        { combine(G.cereal.class.name, G.cereal.class.trigger), "Class serialization into JSON" }
+        { combine(G.cereal.class.name, G.cereal.class.trigger), "Class serialization that uses cereal library" }
     }
 end
 
