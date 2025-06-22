@@ -74,7 +74,62 @@ M.default = {
             separator = "' '",
             -- Completion trigger. Will also use the first word of the function definition line.
             trigger = "shift"
-        }
+        },
+
+        -- JSON serialization
+        json = {
+            -- Enabled by default.
+            enabled = true,
+
+            -- Field will be skipped if this function returns nil.
+            label = function(classname, fieldname, camelized)
+                return camelized
+            end,
+            value = function(fieldref, type)
+                return fieldref
+            end,
+
+            -- Check for null field. To disable null check, this function should return nil.
+            nullcheck = function(fieldref, type)
+                return 'isnull(' .. fieldref .. ')'
+            end,
+            -- If the null check succedes, this is the value that will be serialized. Return nil to skip null field serialization.
+            nullvalue = function(fieldref, type)
+                return 'nullptr'
+            end,
+
+            -- Name of the conversion function. Also used as a completion trigger.
+            name = "to_json",
+
+            -- Additional completion trigger if present.
+            trigger = "to_json"
+        },
+
+        -- Serialization using cereal library.
+        cereal = {
+            -- Enabled by default.
+            enabled = true,
+
+            -- Field will be skipped if this function returns nil.
+            label = function(classname, fieldname, camelized)
+                return camelized
+            end,
+            value = function(fieldref, type)
+                return fieldref
+            end,
+            -- To disable null check, this function should return nil.
+            nullcheck = function(fieldref, type)
+                return nil
+            end,
+            -- If the null check succedes, this is the value that will be serialized. Return nil to skip the serialization.
+            nullvalue = function(fieldref, type)
+                return 'nullptr'
+            end,
+            -- Name of the conversion function. Also used as a completion trigger.
+            name = "save",
+            -- Additional completion trigger if present.
+            trigger = "arch"
+        },
     },
 
     -- Enum type snippet generator.
@@ -101,6 +156,7 @@ M.default = {
             -- Completion trigger. Will also use the first word of the function definition line.
             trigger = "shift"
         },
+
         -- To string conversion function: std::string to_string(enum e).
         to_string = {
             -- Given an enumerator and optional value, return the corresponding string.
@@ -120,6 +176,7 @@ M.default = {
             -- Additional completion trigger if present.
             trigger = "to_string"
         },
+
         -- Enum cast functions. Conversions from various types into enum.
         cast = {
             -- From string conversion function. Matches enumerator name. Specializations of: template <typename T, typename F> T enum_cast(F f).
@@ -167,62 +224,12 @@ M.default = {
             -- Additional completion trigger if present.
             trigger = "enum_cast"
         },
-    },
 
-    -- Serialization using cereal library.
-    cereal = {
-        -- Enabled by default.
-        enabled = true,
+        -- Terse and verbose JSON serialization
+        json = {
+            -- Enabled by default.
+            enabled = true,
 
-        -- Class serialization options.
-        class = {
-            -- Field will be skipped if this function returns nil.
-            label = function(classname, fieldname, camelized)
-                return camelized
-            end,
-            value = function(fieldref, type)
-                return fieldref
-            end,
-            -- To disable null check, this function should return nil.
-            nullcheck = function(fieldref, type)
-                return nil
-            end,
-            -- If the null check succedes, this is the value that will be serialized. Return nil to skip the serialization.
-            nullvalue = function(fieldref, type)
-                return 'nullptr'
-            end,
-            -- Name of the conversion function. Also used as a completion trigger.
-            name = "save",
-            -- Additional completion trigger if present.
-            trigger = "arch"
-        },
-    },
-
-    -- Simple JSON serialization
-    json = {
-        -- Enabled by default.
-        enabled = true,
-
-        -- Class serialization options.
-        class = {
-            -- Field will be skipped if this function returns nil.
-            label = function(classname, fieldname, camelized)
-                return camelized
-            end,
-            value = function(fieldref, type)
-                return fieldref
-            end,
-            -- To disable null check, this function should return nil.
-            nullcheck = function(fieldref, type)
-                return fieldref == 'Null' or fieldref == 'null' or fieldref == 'nullvalue'
-            end,
-            -- If the null check succedes, this is the value that will be serialized. Return nil to skip the serialization.
-            nullvalue = function(fieldref, type)
-                return 'nullptr'
-            end,
-        },
-        -- Enum serialization options.
-        enum = {
             terse = {
                 -- Given an enumerator and optional value, return the desired string.
                 value = function(enumerator, value)
@@ -250,20 +257,19 @@ M.default = {
                     return 'std::to_string(static_cast<std::underlying_type_t<'..classname..'>>(' .. value .. ')) + "(Invalid ' .. classname .. ')"'
                 end,
             },
+
+            -- Name of the conversion function. Also used as a completion trigger.
+            name = "to_json",
+
+            -- Additional completion trigger if present.
+            trigger = "to_json"
         },
-        -- Name of the conversion function. Also used as a completion trigger.
-        name = "to_json",
-        -- Additional completion trigger if present.
-        trigger = "to_json"
-    },
 
-    -- Switch statement generator.
-    switch = {
-        -- Enabled by default.
-        enabled = true,
+        -- Switch statement generator.
+        switch = {
+            -- Enabled by default.
+            enabled = true,
 
-        -- Switch on enums.
-        enum = {
             -- Part that will go between case and break.
             placeholder = function(classname, value)
                 return '// ' .. classname .. '::' .. value
@@ -275,7 +281,7 @@ M.default = {
             -- Completion trigger.
             trigger = "case"
         },
-    }
+    },
 }
 
 return M

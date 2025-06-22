@@ -1,8 +1,9 @@
-# cppgen.nvim
+** cppgen.nvim **
 
 Context-Sensitive Highly Customizable C++ Code Generator for Neovim. This tool is designed to streamline some of the most mundane aspects of the coding process. 
 
-Several Large Language Models (LLMs) can handle a wide range of coding tasks. However, there are reasons why someone might choose to use a custom C++ code generator.
+Several Large Language Models (LLMs) can handle a wide range of coding tasks. However, there are reasons why someone might choose to use a custom code generator.
+
 - **Highly Specific Requirements**: Custom generator can be tailored to match a particular coding style.
 - **Consistency**: Within a given context, custom generators will always generate the same code. 
 - **Customization**: With a custom solution, you have full control over the templates and rules used for code generation.
@@ -15,6 +16,7 @@ that it gets from the LSP server to generate code.
 
 ## Features
 `cppgen.nvim` can currently generate the following code snippets.
+
 - Output stream shift operators for classes and enumerations.
 - Serialization functions for classes and enumerations.
 - To string conversion functions for enumerations.
@@ -57,22 +59,15 @@ cmp.setup {
 }
 ```
 
-# Examples
+## Examples
 For a list of examples see [EXAMPLES](EXAMPLES.md)
 
-# Commands
+## Commands
 - Information.
   - `:CppGen info` to see a list of enabled generators and keys that trigger them.
-- Navigate through generated code.
-  - `:CppGen next`  to jump to the next snippet.
-  - `:CppGen Next` to jump to the next snippet, if different than the generated code.
-  - `:CppGen prev`  to jump to the previous snippet.
-  - `:CppGen Prev` to jump to the previous snippet, if different than the generated code.
-- Preview generated code.
-  - `:CppGen show` to open code snippets in the Telescope picker.
 
-# Customization
-Some aspects of code generation can be customized using options. Here are the default options.
+## Customization
+Some aspects of code generation can be customized using options. Here are the default settings.
 
 ```lua
 {
@@ -127,7 +122,62 @@ Some aspects of code generation can be customized using options. Here are the de
             separator = "' '",
             -- Completion trigger. Will also use the first word of the function definition line.
             trigger = "shift"
-        }
+        },
+
+        -- JSON serialization
+        json = {
+            -- Enabled by default.
+            enabled = true,
+
+            -- Field will be skipped if this function returns nil.
+            label = function(classname, fieldname, camelized)
+                return camelized
+            end,
+            value = function(fieldref, type)
+                return fieldref
+            end,
+
+            -- Check for null field. To disable null check, this function should return nil.
+            nullcheck = function(fieldref, type)
+                return 'isnull(' .. fieldref .. ')'
+            end,
+            -- If the null check succedes, this is the value that will be serialized. Return nil to skip null field serialization.
+            nullvalue = function(fieldref, type)
+                return 'nullptr'
+            end,
+
+            -- Name of the conversion function. Also used as a completion trigger.
+            name = "to_json",
+
+            -- Additional completion trigger if present.
+            trigger = "to_json"
+        },
+
+        -- Serialization using cereal library.
+        cereal = {
+            -- Enabled by default.
+            enabled = true,
+
+            -- Field will be skipped if this function returns nil.
+            label = function(classname, fieldname, camelized)
+                return camelized
+            end,
+            value = function(fieldref, type)
+                return fieldref
+            end,
+            -- To disable null check, this function should return nil.
+            nullcheck = function(fieldref, type)
+                return nil
+            end,
+            -- If the null check succedes, this is the value that will be serialized. Return nil to skip the serialization.
+            nullvalue = function(fieldref, type)
+                return 'nullptr'
+            end,
+            -- Name of the conversion function. Also used as a completion trigger.
+            name = "save",
+            -- Additional completion trigger if present.
+            trigger = "arch"
+        },
     },
 
     -- Enum type snippet generator.
@@ -154,6 +204,7 @@ Some aspects of code generation can be customized using options. Here are the de
             -- Completion trigger. Will also use the first word of the function definition line.
             trigger = "shift"
         },
+
         -- To string conversion function: std::string to_string(enum e).
         to_string = {
             -- Given an enumerator and optional value, return the corresponding string.
@@ -173,6 +224,7 @@ Some aspects of code generation can be customized using options. Here are the de
             -- Additional completion trigger if present.
             trigger = "to_string"
         },
+
         -- Enum cast functions. Conversions from various types into enum.
         cast = {
             -- From string conversion function. Matches enumerator name. Specializations of: template <typename T, typename F> T enum_cast(F f).
@@ -220,92 +272,52 @@ Some aspects of code generation can be customized using options. Here are the de
             -- Additional completion trigger if present.
             trigger = "enum_cast"
         },
-    },
 
-    -- Serialization using cereal library.
-    cereal = {
-        -- Enabled by default.
-        enabled = true,
+        -- Terse and verbose JSON serialization
+        json = {
+            -- Enabled by default.
+            enabled = true,
 
-        -- Class serialization options.
-        class = {
-            -- Field will be skipped if this function returns nil.
-            label = function(classname, fieldname, camelized)
-                return camelized
-            end,
-            value = function(fieldref, type)
-                return fieldref
-            end,
-            -- To disable null check, this function should return nil.
-            nullcheck = function(fieldref, type)
-                return nil
-            end,
-            -- If the null check succedes, this is the value that will be serialized. Return nil to skip the serialization.
-            nullvalue = function(fieldref, type)
-                return 'nullptr'
-            end,
-            -- Name of the conversion function. Also used as a completion trigger.
-            name = "save",
-            -- Additional completion trigger if present.
-            trigger = "arch"
-        },
-    },
-
-    -- Simple JSON serialization
-    json = {
-        -- Enabled by default.
-        enabled = true,
-
-        -- Class serialization options.
-        class = {
-            -- Field will be skipped if this function returns nil.
-            label = function(classname, fieldname, camelized)
-                return camelized
-            end,
-            value = function(fieldref, type)
-                return fieldref
-            end,
-            -- To disable null check, this function should return nil.
-            nullcheck = function(fieldref, type)
-                return nil
-            end,
-            -- If the null check succedes, this is the value that will be serialized. Return nil to skip the serialization.
-            nullvalue = function(fieldref, type)
-                return 'nullptr'
-            end,
-        },
-        -- Enum serialization options.
-        enum = {
             terse = {
                 -- Given an enumerator and optional value, return the desired string.
                 value = function(enumerator, value)
-                    return value
+                    return (enumerator == 'Null' or enumerator == 'null' or enumerator == 'nullvalue') and 'nullptr' or value
+                end,
+                --  Expression for the default case. If nil, no default case will be generated.
+                default = function(classname, value)
+                    return 'static_cast<std::underlying_type_t<'..classname..'>>(' .. value .. ')'
                 end,
             },
             verbose = {
                 -- Given an enumerator and optional value, return the desired string.
                 value = function(enumerator, value)
+                    if enumerator == 'Null' or enumerator == 'null' or enumerator == 'nullvalue' then
+                        return 'nullptr'
+                    end
                     if (value) then
                         return '"' .. value .. '(' .. enumerator .. ')' .. '"'
                     else
                         return enumerator
                     end
                 end,
+                --  Expression for the default case. If nil, no default case will be generated.
+                default = function(classname, value)
+                    return 'std::to_string(static_cast<std::underlying_type_t<'..classname..'>>(' .. value .. ')) + "(Invalid ' .. classname .. ')"'
+                end,
             },
+
+            -- Name of the conversion function. Also used as a completion trigger.
+            name = "to_json",
+
+            -- Additional completion trigger if present.
+            trigger = "to_json"
         },
-        -- Name of the conversion function. Also used as a completion trigger.
-        name = "to_json",
-        -- Additional completion trigger if present.
-        trigger = "to_json"
-    },
 
-    -- Switch statement generator.
-    switch = {
-        -- Enabled by default.
-        enabled = true,
+        -- Switch statement generator.
+        switch = {
+            -- Enabled by default.
+            enabled = true,
 
-        -- Switch on enums.
-        enum = {
             -- Part that will go between case and break.
             placeholder = function(classname, value)
                 return '// ' .. classname .. '::' .. value
@@ -317,7 +329,7 @@ Some aspects of code generation can be customized using options. Here are the de
             -- Completion trigger.
             trigger = "case"
         },
-    }
+    },
 }
 ```
 

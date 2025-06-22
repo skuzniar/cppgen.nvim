@@ -36,7 +36,7 @@ local function enum_labels_and_values(node)
             if n.kind == "EnumConstant" then
                 local record = {}
                 record.label = ast.name(node) .. '::' .. ast.name(n)
-                record.value = G.switch.enum.placeholder(ast.name(node), ast.name(n))
+                record.value = G.enum.switch.placeholder(ast.name(node), ast.name(n))
                 table.insert(records, record)
             end
             return true
@@ -81,7 +81,7 @@ local function case_enum_snippet(node)
         table.insert(lines, apply('<indent>break;'))
     end
 
-    P.default = G.switch.enum.default(ast.name(node), ast.name(condition_ref_node))
+    P.default = G.enum.switch.default(ast.name(node), ast.name(condition_ref_node))
     if P.default then
         table.insert(lines, apply('default:'))
         table.insert(lines, apply('<indent><default>;'))
@@ -191,7 +191,7 @@ end
 ---------------------------------------------------------------------------------------------------
 function M.info()
     return {
-        { G.switch.enum.trigger, "Case switch statements" }
+        { G.enum.switch.trigger, "Case switch statements from enumeration" }
     }
 end
 
@@ -199,7 +199,7 @@ end
 --- Initialization callback
 ---------------------------------------------------------------------------------------------------
 function M.setup(opts)
-    G.switch = opts.switch
+    G.enum = opts.enum
 end
 
 return M
