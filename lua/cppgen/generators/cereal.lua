@@ -44,29 +44,29 @@ local function class_labels_and_values(node, object)
             if n.kind == "Field" then
                 local record = {}
                 record.field = ast.name(n)
-                record.label = G.cereal.class.label(ast.name(node), record.field, utl.camelize(record.field))
+                record.label = G.class.cereal.label(ast.name(node), record.field, utl.camelize(record.field))
 
                 -- Null handling checks
-                if G.cereal.class.nullcheck then
+                if G.class.cereal.nullcheck then
                     if (object) then
-                        record.nullcheck = G.cereal.class.nullcheck(object .. '.' .. record.field, ast.type(n))
+                        record.nullcheck = G.class.cereal.nullcheck(object .. '.' .. record.field, ast.type(n))
                     else
-                        record.nullcheck = G.cereal.class.nullcheck(record.field, ast.type(n))
+                        record.nullcheck = G.class.cereal.nullcheck(record.field, ast.type(n))
                     end
                 end
-                if G.cereal.class.nullvalue then
+                if G.class.cereal.nullvalue then
                     if (object) then
-                        record.nullvalue = G.cereal.class.nullvalue(object .. '.' .. record.field, ast.type(n))
+                        record.nullvalue = G.class.cereal.nullvalue(object .. '.' .. record.field, ast.type(n))
                     else
-                        record.nullvalue = G.cereal.class.nullvalue(record.field, ast.type(n))
+                        record.nullvalue = G.class.cereal.nullvalue(record.field, ast.type(n))
                     end
                 end
                 -- Custom code will trigger field skipping when it sets either label or value to nil
                 if record.label ~= nil then
                     if (object) then
-                        record.value = G.cereal.class.value(object .. '.' .. record.field, ast.type(n))
+                        record.value = G.class.cereal.value(object .. '.' .. record.field, ast.type(n))
                     else
-                        record.value = G.cereal.class.value(record.field, ast.type(n))
+                        record.value = G.class.cereal.value(record.field, ast.type(n))
                     end
                     if record.value ~= nil then
                         table.insert(records, record)
@@ -88,7 +88,7 @@ local function save_class_snippet(node, alias, specifier, member)
     P.specifier    = specifier
     P.attribute    = G.attribute and ' ' .. G.attribute or ''
     P.classname    = alias and ast.name(alias) or ast.name(node)
-    P.functionname = G.cereal.class.name
+    P.functionname = G.class.cereal.name
     P.indent       = string.rep(' ', vim.lsp.util.get_effective_tabstop())
 
     local records = member and class_labels_and_values(node) or class_labels_and_values(node, 'o')
@@ -162,9 +162,9 @@ end
 local function save_class_items(lines)
     return
     {
-        { trigger = G.cereal.class.name, lines = lines },
-        G.cereal.class.trigger ~= G.cereal.class.name and
-        { trigger = G.cereal.class.trigger, lines = lines } or nil
+        { trigger = G.class.cereal.name, lines = lines },
+        G.class.cereal.trigger ~= G.class.cereal.name and
+        { trigger = G.class.cereal.trigger, lines = lines } or nil
     }
 end
 
@@ -255,7 +255,7 @@ end
 
 function M.info()
     return {
-        { combine(G.cereal.class.name, G.cereal.class.trigger), "Class serialization that uses cereal library" }
+        { combine(G.class.cereal.name, G.class.cereal.trigger), "Class serialization that uses cereal library" }
     }
 end
 
@@ -265,7 +265,7 @@ end
 function M.setup(opts)
     G.keepindent = opts.keepindent
     G.attribute  = opts.attribute
-    G.cereal     = opts.cereal
+    G.class      = opts.class
 end
 
 return M

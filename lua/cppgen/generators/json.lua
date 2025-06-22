@@ -45,29 +45,31 @@ local function class_labels_and_values(node, object)
             if n.kind == "Field" then
                 local record = {}
                 record.field = ast.name(n)
-                record.label = G.json.class.label(ast.name(node), record.field, utl.camelize(record.field))
+                record.label = G.class.json.label(ast.name(node), record.field, utl.camelize(record.field))
 
                 -- Null handling checks
-                if G.json.class.nullcheck then
+                if G.class.json.nullcheck then
                     if (object) then
-                        record.nullcheck = G.json.class.nullcheck(object .. '.' .. record.field, ast.type(n))
+                        record.nullcheck = G.class.json.nullcheck(object .. '.' .. record.field, ast.type(n))
                     else
-                        record.nullcheck = G.json.class.nullcheck(record.field, ast.type(n))
+                        record.nullcheck = G.class.json.nullcheck(record.field, ast.type(n))
                     end
+    log.debug("record.nullcheck=", record.nullcheck)
                 end
-                if G.json.class.nullvalue then
+                if G.class.json.nullvalue then
                     if (object) then
-                        record.nullvalue = G.json.class.nullvalue(object .. '.' .. record.field, ast.type(n))
+                        record.nullvalue = G.class.json.nullvalue(object .. '.' .. record.field, ast.type(n))
                     else
-                        record.nullvalue = G.json.class.nullvalue(record.field, ast.type(n))
+                        record.nullvalue = G.class.json.nullvalue(record.field, ast.type(n))
                     end
+    log.debug("record.nullvalue=", record.nullvalue)
                 end
                 -- Custom code will trigger field skipping when it sets either label or value to nil
                 if record.label ~= nil then
                     if (object) then
-                        record.value = G.json.class.value(object .. '.' .. record.field, ast.type(n))
+                        record.value = G.class.json.value(object .. '.' .. record.field, ast.type(n))
                     else
-                        record.value = G.json.class.value(record.field, ast.type(n))
+                        record.value = G.class.json.value(record.field, ast.type(n))
                     end
                     if record.value ~= nil then
                         table.insert(records, record)
@@ -88,7 +90,7 @@ local function save_class_snippet(node, alias, friend)
 
     P.attribute    = G.attribute or ''
     P.classname    = alias and ast.name(alias) or ast.name(node)
-    P.functionname = G.json.name
+    P.functionname = G.class.json.name
     P.indent       = string.rep(' ', vim.lsp.util.get_effective_tabstop())
 
     local records = class_labels_and_values(node, 'o')
@@ -102,35 +104,36 @@ local function save_class_snippet(node, alias, friend)
         table.insert(lines, apply('inline <attribute> std::string <functionname>(const <classname>& o, bool verbose)'))
     end
     table.insert(lines, apply('{'))
+    table.insert(lines, apply('<indent>std::string s;'))
     if G.keepindent then
         table.insert(lines, apply('<indent>// clang-format off'))
     end
-    table.insert(lines, apply('<indent>return std::string()'))
-    table.insert(lines, apply('<indent><indent>+ "{"'))
+    table.insert(lines, apply('<indent>s += "{";'))
 
     --- Get straight - no null check code variation
-    local function code(last)
-        return '<indent><indent>+ <dquote> + "<label>"<labelpad> + <dquote> + <colon> + <functionname>(<value><valuepad>, verbose)' .. (last and '' or ' + <comma>')
+    local function codex()
+        return 'std::string() + <dquote> + "<label>"<labelpad> + <dquote> + <colon> + <functionname>(<value><valuepad>, verbose);'
     end
-    --- Get straight - no null check code variation
-    local function straight_code(l, last)
-        table.insert(l, apply(code(last)))
+    local function codez()
+        return 'std::string() + <dquote> + "<label>"<labelpad> + <dquote> + <colon> + (<nullcheck><valuepad> ? <functionname>(<nullvalue>, verbose) : <functionname>(<value><valuepad>, verbose));'
+    end
+    local function codey()
+        return '(<nullcheck><valuepad> ? "" : std::string() + <dquote> + "<label>"<labelpad> + <dquote> + <colon> + <functionname>(<value><valuepad>, verbose));'
+    end
+
+    --- Get no-null-check code variation
+    local function straight_code(l)
+        table.insert(l, apply('<indent>s += ' .. codex()))
     end
 
     --- Get skip-null code variation
-    local function skipnull_code(l, last)
-        table.insert(l, apply('<indent>if(!<nullcheck>) {'))
-        table.insert(l, apply(code(last)))
-        table.insert(l, apply('<indent>}'))
+    local function skipnull_code(l)
+        table.insert(l, apply('<indent>s += ' .. codey()))
     end
 
     --- Get show-null code variation
-    local function shownull_code(l, last)
-        table.insert(l, apply('<indent>if(!<nullcheck>) {'))
-        table.insert(l, apply(code(last)))
-        table.insert(l, apply('<indent>} else {'))
-        table.insert(l, apply(code(last)))
-        table.insert(l, apply('<indent>}'))
+    local function shownull_code(l)
+        table.insert(l, apply('<indent>s += ' .. codez()))
     end
 
     local idx = 1
@@ -145,20 +148,21 @@ local function save_class_snippet(node, alias, friend)
 
         if r.nullcheck ~= nil then
             if r.nullvalue ~= nil then
-                shownull_code(lines, idx == #records)
+                shownull_code(lines)
             else
                 skipnull_code(lines, idx == #records)
             end
         else
-            straight_code(lines, idx == #records)
+            straight_code(lines)
         end
         idx = idx + 1
     end
 
-    table.insert(lines, apply('<indent><indent>+ "}";'))
+    table.insert(lines, apply('<indent>s += "}";'))
     if G.keepindent then
         table.insert(lines, apply('<indent>// clang-format on'))
     end
+    table.insert(lines, apply('<indent>return s;'))
     table.insert(lines, apply('}'))
 
     for _,l in ipairs(lines) do log.debug(l) end
@@ -169,9 +173,9 @@ end
 local function save_class_items(lines)
     return
     {
-        { trigger = G.json.name, lines = lines },
-        G.json.trigger ~= G.json.name and
-        { trigger = G.json.trigger, lines = lines } or nil
+        { trigger = G.class.json.name, lines = lines },
+        G.class.json.trigger ~= G.class.json.name and
+        { trigger = G.class.json.trigger, lines = lines } or nil
     }
 end
 
@@ -208,7 +212,7 @@ local function save_enum_snippet(node, alias)
 
     P.attribute    = G.attribute or ''
     P.classname    = alias and ast.name(alias) or ast.name(node)
-    P.functionname = G.json.name
+    P.functionname = G.enum.json.name
     P.indent       = string.rep(' ', vim.lsp.util.get_effective_tabstop())
 
     local lines = {}
@@ -257,11 +261,11 @@ local function save_enum_snippet(node, alias)
         return false
     end
 
-    local vrecords = enum_labels_and_values(node, alias, G.json.enum.verbose.value)
-    local trecords = enum_labels_and_values(node, alias, G.json.enum.terse.value)
+    local vrecords = enum_labels_and_values(node, alias, G.enum.json.verbose.value)
+    local trecords = enum_labels_and_values(node, alias, G.enum.json.terse.value)
 
-    local vdefault = G.json.enum.verbose.default and G.json.enum.verbose.default(P.classname, 'o')
-    local tdefault = G.json.enum.terse.default   and G.json.enum.terse.default(P.classname, 'o')
+    local vdefault = G.enum.json.verbose.default and G.enum.json.verbose.default(P.classname, 'o')
+    local tdefault = G.enum.json.terse.default   and G.enum.json.terse.default(P.classname, 'o')
 
     if (same(vrecords, trecords)) then
         switch(lines, vrecords, vdefault)
@@ -288,9 +292,9 @@ end
 local function save_enum_items(lines)
     return
     {
-        { trigger = G.json.name, lines = lines },
-        G.json.trigger ~= G.json.name and
-        { trigger = G.json.trigger, lines = lines } or nil
+        { trigger = G.enum.json.name, lines = lines },
+        G.enum.json.trigger ~= G.enum.json.name and
+        { trigger = G.enum.json.trigger, lines = lines } or nil
     }
 end
 
@@ -378,9 +382,16 @@ local function combine(name, trigger)
 end
 
 function M.info()
-    return {
-        { combine(G.json.name, G.json.trigger), "Class and enum serialization into JSON" }
-    }
+    local info = {}
+
+    if G.class.json.enabled then
+        table.insert(info, { combine(G.class.json.name, G.class.json.trigger), "Class serialization into JSON" })
+    end
+    if G.enum.json.enabled then
+        table.insert(info, { combine(G.enum.json.name, G.enum.json.trigger), "Enum serialization into JSON" })
+    end
+
+    return info
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -389,7 +400,8 @@ end
 function M.setup(opts)
     G.keepindent = opts.keepindent
     G.attribute  = opts.attribute
-    G.json       = opts.json
+    G.class      = opts.class
+    G.enum       = opts.enum
 end
 
 return M

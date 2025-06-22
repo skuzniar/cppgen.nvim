@@ -69,7 +69,7 @@ local function pad(s, len)
     return s .. string.rep(' ', len - string.len(s))
 end
 
-local function show_help()
+local function show_info()
     local info = gen.info()
 
     if #info > 0 then
@@ -97,7 +97,7 @@ end
 ---------------------------------------------------------------------------------------------------
 local calls =
 {
-    help = show_help,
+    info = show_info,
 }
 
 local function get_keys(t)
@@ -110,7 +110,7 @@ end
 
 vim.api.nvim_create_user_command('CppGen',
     function(opts)
-        local f = calls[opts.fargs[1] or 'help']
+        local f = calls[opts.fargs[1] or 'info']
         if f then
             f()
         end
