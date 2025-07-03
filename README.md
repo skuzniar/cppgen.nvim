@@ -4,18 +4,18 @@ Context-Sensitive Highly Customizable C++ Code Generator for Neovim. This tool i
 
 Several Large Language Models (LLMs) can handle a wide range of coding tasks. However, there are reasons why someone might choose to use a custom code generator.
 
-- **Highly Specific Requirements**: Custom generator can be tailored to match a particular coding style.
+- **Specific Requirements**: Custom generator can be tailored to match a particular coding style.
 - **Consistency**: Within a given context, custom generators will always generate the same code. 
 - **Customization**: With a custom solution, you have full control over the templates and rules used for code generation.
 - **Performance**: A code generator that runs locally is often faster than one that interacts with the remote system.
 
 ## Design Philosophy
-`cppgen.nvim` acts as a source of code fragments for the completion engine. While in the insert mode, the location of the cursor within the buffer determines the current context. 
-Certain language constructs, like classes, enumerations, or switch statements, located above or around the cursor may trigger code generation. `cppgen.nvim` uses type information 
-that it gets from the LSP server to generate code.
+**cppgen.nvim** acts as a source of code fragments for the completion engine. While in the insert mode, the location of the cursor within the buffer determines 
+the current context. Certain language constructs, like classes, enumerations, or switch statements, located above or around the cursor may trigger code generation. 
+**cppgen.nvim** uses LSP server to get the type information necessary to generate code.
 
 ## Features
-`cppgen.nvim` can currently generate the following code snippets.
+**cppgen.nvim** can currently generate the following code snippets.
 
 - Output stream shift operators for classes and enumerations.
 - Serialization functions for classes and enumerations.
@@ -59,15 +59,12 @@ cmp.setup {
 }
 ```
 
-## Examples
-For a list of examples see [EXAMPLES](EXAMPLES.md)
-
 ## Commands
 - Information.
-  - `:CppGen info` to see a list of enabled generators and keys that trigger them.
+  - `:CppGen info` to see the list of enabled generators and the keys that trigger them.
 
 ## Customization
-Some aspects of code generation can be customized using options. Here are the default settings.
+Many aspects of code generation can be customized using options. Here are the default settings.
 
 ```lua
 {
@@ -260,7 +257,9 @@ Some aspects of code generation can be customized using options. Here are the de
             -- Name of the conversion function. Also used as a completion trigger.
             name = "enum_cast",
             -- Additional completion trigger if present.
-            trigger = "enum_cast"
+            trigger = "enum_cast",
+            -- Combine all cast snippets into one.
+            combine = true
         },
 
         -- Terse and verbose JSON serialization

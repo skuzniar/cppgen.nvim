@@ -7,6 +7,10 @@ local M = {}
 M.Precedes = 1
 M.Encloses = 2
 
+--- Scope in which the code generation occures
+M.Class = 1
+M.Other = 100
+
 --- Depth first traversal over AST tree with descend filter, pre and post order operations.
 function M.dfs(node, filt, pref, posf)
     pref(node)

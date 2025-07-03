@@ -13,14 +13,14 @@ local utl = require('cppgen.generators.util')
 local G = {}
 
 ---------------------------------------------------------------------------------------------------
--- Local parameters for code generation.
+-- Private parameters for code generation.
 ---------------------------------------------------------------------------------------------------
 local P = {}
 
 -- Capture parameters
-local lspclient          = nil
-local condition_ref_node = nil
-local condition_def_node = nil
+local L = {
+    lspclient = nil
+}
 
 -- Apply parameters to the format string 
 local function apply(format)
@@ -59,13 +59,13 @@ end
 ---------------------------------------------------------------------------------------------------
 -- Generate mock case statements for an enum type node.
 ---------------------------------------------------------------------------------------------------
-local function case_enum_snippet(node)
-    log.trace("case_enum_snippet:", ast.details(node))
+local function case_enum_snippet(defnode, refnode)
+    log.trace("case_enum_snippet:", ast.details(defnode))
 
-    P.classname = ast.name(node)
+    P.classname = ast.name(defnode)
     P.indent    = string.rep(' ', vim.lsp.util.get_effective_tabstop())
 
-    local records = enum_labels_and_values(node)
+    local records = enum_labels_and_values(defnode)
     local maxllen, maxvlen = max_lengths(records)
 
     local lines = {}
@@ -81,7 +81,7 @@ local function case_enum_snippet(node)
         table.insert(lines, apply('<indent>break;'))
     end
 
-    P.default = G.enum.switch.default(ast.name(node), ast.name(condition_ref_node))
+    P.default = G.enum.switch.default(ast.name(defnode), ast.name(refnode))
     if P.default then
         table.insert(lines, apply('default:'))
         table.insert(lines, apply('<indent><default>;'))
@@ -93,13 +93,12 @@ local function case_enum_snippet(node)
 end
 
 -- Generate mock case statements completion item for an enum type node.
-local function case_enum_item(node)
+local function case_enum_item(defnode, refnode)
     log.trace("case_enum_item:", ast.details(node))
-    return { trigger = 'case', lines = case_enum_snippet(node) }
-end
-
-local function is_switch(node)
-    return node and node.role == "statement" and node.kind == "Switch"
+    return
+    {
+        { trigger = 'case', lines = case_enum_snippet(defnode, refnode) }
+    }
 end
 
 --- Given a switch statement node, find the embeded condition node
@@ -120,6 +119,9 @@ local function get_switch_condition_node(node)
     return cond
 end
 
+---------------------------------------------------------------------------------------------------
+--- Public interface.
+---------------------------------------------------------------------------------------------------
 local M = {}
 
 ---------------------------------------------------------------------------------------------------
@@ -127,7 +129,7 @@ local M = {}
 ---------------------------------------------------------------------------------------------------
 function M.attached(client, bufnr)
     log.trace("Attached client", client.id, "buffer", bufnr)
-    lspclient = client
+    L.lspclient = client
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -139,57 +141,28 @@ function M.digs()
 end
 
 ---------------------------------------------------------------------------------------------------
---- Generator will call this method before presenting a set of new candidate nodes
----------------------------------------------------------------------------------------------------
-function M.reset()
-    condition_ref_node  = nil
-    condition_def_node = nil
-end
-
----------------------------------------------------------------------------------------------------
---- Generator will call this method with a node, optional type alias and a node location
----------------------------------------------------------------------------------------------------
-function M.visit(node, alias, location)
-    -- We can attempt to generate the switch statement if we are inside of a switch node
-    if location == ast.Encloses and is_switch(node) then
-        local cond = get_switch_condition_node(node)
-        if cond then
-            log.debug("visit:", "condition node", ast.details(cond))
-            condition_ref_node = cond
-            lsp.get_type_definition(lspclient, cond, function(n)
-                log.debug("visit:", "def node", ast.details(n))
-                condition_def_node = n
-            end)
-        end
-    end
-end
-
----------------------------------------------------------------------------------------------------
---- Generator will call this method to check if the module can generate code
----------------------------------------------------------------------------------------------------
-function M.available()
-    return condition_def_node ~= nil
-end
-
----------------------------------------------------------------------------------------------------
 -- Generate from string functions for an enum nodes.
 ---------------------------------------------------------------------------------------------------
-function M.generate(strict)
-    log.trace("generate:", ast.details(condition_def_node))
+function M.generate(node, alias, scope, acceptor)
+    log.trace("generate:", ast.details(node))
 
-    local items = {}
-
-    if ast.is_enum(condition_def_node) then
-        table.insert(items, case_enum_item(condition_def_node))
+    local cond = get_switch_condition_node(node)
+    if cond then
+        log.debug("generate:", "condition node", ast.details(cond))
+        lsp.get_type_definition(L.lspclient, cond, function(n)
+            log.debug("generate:", "definition node", ast.details(n))
+            for _,item in ipairs(case_enum_item(n, cond)) do
+                acceptor(item)
+            end
+        end)
     end
-
-    return items
 end
 
 ---------------------------------------------------------------------------------------------------
 --- Info callback
 ---------------------------------------------------------------------------------------------------
 function M.info()
+    log.trace("info")
     return {
         { G.enum.switch.trigger, "Case switch statements from enumeration" }
     }
@@ -199,7 +172,9 @@ end
 --- Initialization callback
 ---------------------------------------------------------------------------------------------------
 function M.setup(opts)
+    log.trace("setup")
     G.enum = opts.enum
+    log.trace("setup:", G)
 end
 
 return M

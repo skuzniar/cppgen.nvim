@@ -1,5 +1,6 @@
 local log = require('cppgen.log')
-local gen = require('cppgen.generator')
+
+local src = require('cppgen.cmpsource')
 
 ---------------------------------------------------------------------------------------------------
 -- Code generation module. Forwards events to the code completion module
@@ -10,7 +11,8 @@ local M = {}
 --- Initialization callback
 ---------------------------------------------------------------------------------------------------
 function M.setup(opts)
-    gen.setup(opts)
+    log.trace("setup")
+    src.setup(opts)
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -18,7 +20,7 @@ end
 ---------------------------------------------------------------------------------------------------
 function M.attached(client, bufnr)
     log.trace("Attached client", client.id, "buffer", bufnr)
-	gen.attached(client, bufnr)
+	src.attached(client, bufnr)
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -26,7 +28,7 @@ end
 ---------------------------------------------------------------------------------------------------
 function M.insert_enter(bufnr)
     log.trace("Entered insert mode buffer:", bufnr)
-	gen.insert_enter(bufnr)
+	src.insert_enter(bufnr)
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -34,7 +36,7 @@ end
 ---------------------------------------------------------------------------------------------------
 function M.insert_leave(bufnr)
     log.trace("Exited insert mode buffer:", bufnr)
-	gen.insert_leave(bufnr)
+	src.insert_leave(bufnr)
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -42,7 +44,7 @@ end
 ---------------------------------------------------------------------------------------------------
 function M.after_write(bufnr)
     log.trace("Wrote buffer:", bufnr)
-	gen.after_write(bufnr)
+	src.after_write(bufnr)
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -50,7 +52,7 @@ end
 ---------------------------------------------------------------------------------------------------
 function M.source()
     log.trace("source")
-    return gen.source()
+    return src.source()
 end
 
 -- Calculate the longest length of the first two element in the records
@@ -70,7 +72,7 @@ local function pad(s, len)
 end
 
 local function show_info()
-    local info = gen.info()
+    local info = src.info()
 
     if #info > 0 then
         local header = { 'Completion trigger', 'Generated code snippet'}

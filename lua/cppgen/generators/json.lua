@@ -12,7 +12,7 @@ local utl = require('cppgen.generators.util')
 local G = {}
 
 ---------------------------------------------------------------------------------------------------
--- Local parameters for code generation.
+-- Private parameters for code generation.
 ---------------------------------------------------------------------------------------------------
 local P = {}
 
@@ -54,7 +54,6 @@ local function class_labels_and_values(node, object)
                     else
                         record.nullcheck = G.class.json.nullcheck(record.field, ast.type(n))
                     end
-    log.debug("record.nullcheck=", record.nullcheck)
                 end
                 if G.class.json.nullvalue then
                     if (object) then
@@ -62,7 +61,6 @@ local function class_labels_and_values(node, object)
                     else
                         record.nullvalue = G.class.json.nullvalue(record.field, ast.type(n))
                     end
-    log.debug("record.nullvalue=", record.nullvalue)
                 end
                 -- Custom code will trigger field skipping when it sets either label or value to nil
                 if record.label ~= nil then
@@ -304,10 +302,9 @@ local function save_enum_free_items(node, alias)
     return save_enum_items(save_enum_snippet(node, alias, false))
 end
 
-local enclosing_node = nil
-local preceding_node = nil
-local typealias_node = nil
-
+---------------------------------------------------------------------------------------------------
+--- Public interface.
+---------------------------------------------------------------------------------------------------
 local M = {}
 
 ---------------------------------------------------------------------------------------------------
@@ -318,71 +315,41 @@ function M.digs()
     return { "CXXRecord", "ClassTemplate", "Enum" }
 end
 
---- Generator will call this method before presenting a set of new candidate nodes
-function M.reset()
-    enclosing_node = nil
-    preceding_node = nil
-    typealias_node = nil
-end
-
----------------------------------------------------------------------------------------------------
---- Generator will call this method with a node, optional type alias and a node location
----------------------------------------------------------------------------------------------------
-function M.visit(node, alias, location)
-    -- We can generate serialization function for enclosing class node
-    if location == ast.Encloses and ast.is_class(node) then
-        log.debug("visit:", "Accepted enclosing node", ast.details(node))
-        enclosing_node = node
-    end
-    -- We can generate serialization function for preceding enumeration and class nodes
-    if location == ast.Precedes and (ast.is_enum(node) or ast.is_class(node)) then
-        log.debug("visit:", "Accepted preceding node", ast.details(node))
-        preceding_node = node
-    end
-    typealias_node = alias
-end
-
----------------------------------------------------------------------------------------------------
---- Generator will call this method to check if the module can generate code
----------------------------------------------------------------------------------------------------
-function M.available()
-    return enclosing_node ~= nil or preceding_node ~= nil
-end
-
--- Add elements of one table into another table
-local function add_to(to, from)
-    for _,item in ipairs(from) do
-        table.insert(to, item)
-    end
-end
 ---------------------------------------------------------------------------------------------------
 -- Generate completion items
 ---------------------------------------------------------------------------------------------------
-function M.generate(strict)
-    log.trace("generate:", ast.details(preceding_node), ast.details(enclosing_node))
+function M.generate(node, alias, scope, acceptor)
+    log.trace("generate:", ast.details(node))
 
-    local items = {}
-    if ast.is_class(enclosing_node) then
-        add_to(items, save_class_friend_items(enclosing_node, typealias_node))
+    if ast.is_class(node) then
+        if scope == ast.Class then
+            for _,item in ipairs(save_class_friend_items(node, alias)) do
+                acceptor(item)
+            end
+        else
+            for _,item in ipairs(save_class_free_items(node, alias)) do
+                acceptor(item)
+            end
+        end
     end
-    if ast.is_class(preceding_node) then
-        add_to(items, save_class_free_items(preceding_node, typealias_node))
+
+    if ast.is_enum(node) then
+        for _,item in ipairs(save_enum_free_items(node, alias)) do
+            acceptor(item)
+        end
     end
-    if ast.is_enum(preceding_node) then
-        add_to(items, save_enum_free_items(preceding_node, typealias_node))
-    end
-    return items
 end
 
 ---------------------------------------------------------------------------------------------------
 --- Info callback
 ---------------------------------------------------------------------------------------------------
-local function combine(name, trigger)
-    return name == trigger and name or name .. ' or ' .. trigger
-end
-
 function M.info()
+    log.trace("info")
     local info = {}
+
+    local function combine(name, trigger)
+        return name == trigger and name or name .. ' or ' .. trigger
+    end
 
     if G.class.json.enabled then
         table.insert(info, { combine(G.class.json.name, G.class.json.trigger), "Class serialization into JSON" })
@@ -398,10 +365,12 @@ end
 --- Initialization callback. Capture relevant parts of the configuration.
 ---------------------------------------------------------------------------------------------------
 function M.setup(opts)
+    log.trace("setup")
     G.keepindent = opts.keepindent
     G.attribute  = opts.attribute
     G.class      = opts.class
     G.enum       = opts.enum
+    log.trace("setup:", G)
 end
 
 return M

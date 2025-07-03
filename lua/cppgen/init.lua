@@ -59,6 +59,7 @@ function M.setup(opts)
 
     log.new(options.log, true)
 
+    log.trace("setup")
     cgn.setup(options)
 
 	vim.api.nvim_create_autocmd("LspAttach", {

@@ -12,7 +12,7 @@ local utl = require('cppgen.generators.util')
 local G = {}
 
 ---------------------------------------------------------------------------------------------------
--- Local parameters for code generation.
+-- Private parameters for code generation.
 ---------------------------------------------------------------------------------------------------
 local P = {}
 
@@ -125,86 +125,42 @@ local function shift_free_items(node, alias)
     return shift_items(shift_snippet(node, alias, 'inline'))
 end
 
+---------------------------------------------------------------------------------------------------
+--- Public interface.
+---------------------------------------------------------------------------------------------------
 local M = {}
-
-local enclosing_node = nil
-local preceding_node = nil
-local typealias_node = nil
 
 ---------------------------------------------------------------------------------------------------
 --- Generator will call this method to get kind of nodes that are of interest to each generator.
 ---------------------------------------------------------------------------------------------------
 function M.digs()
-    log.trace("digs:")
+    log.trace("digs")
     return { "Record", "CXXRecord", "ClassTemplate" }
 end
 
 ---------------------------------------------------------------------------------------------------
---- Generator will call this method before presenting a set of new candidate nodes.
+-- Generate plain output stream shift operator for a class node.
 ---------------------------------------------------------------------------------------------------
-function M.reset()
-    log.trace("reset:")
-    enclosing_node = nil
-    preceding_node = nil
-    typealias_node = nil
-end
-
----------------------------------------------------------------------------------------------------
---- Generator will call this method with a node, optional type alias and a node location
----------------------------------------------------------------------------------------------------
-function M.visit(node, alias, location)
-    -- We can generate shift operator for enclosing class node
-    if location == ast.Encloses and ast.is_class(node) then
-        log.debug("visit:", "Accepted enclosing node", ast.details(node))
-        enclosing_node = node
-    end
-    -- We can generate shift operator for preceding enumeration and class nodes
-    if location == ast.Precedes and (ast.is_enum(node) or ast.is_class(node)) then
-        log.debug("visit:", "Accepted preceding node", ast.details(node))
-        preceding_node = node
-    end
-    typealias_node = alias
-end
-
----------------------------------------------------------------------------------------------------
---- Generator will call this method to check if the module can generate code.
----------------------------------------------------------------------------------------------------
-function M.available()
-    return enclosing_node ~= nil or preceding_node ~= nil
-end
-
----------------------------------------------------------------------------------------------------
--- Generate plain output stream shift operator for a class and enum nodes.
----------------------------------------------------------------------------------------------------
-function M.generate(strict)
-    log.trace("generate:", ast.details(preceding_node), ast.details(enclosing_node))
-
-    local items = {}
-
-    if ast.is_class(preceding_node) then
-        if ast.is_class(enclosing_node) then
-            for _,item in ipairs(shift_member_items(preceding_node, typealias_node)) do
-                table.insert(items, item)
+function M.generate(node, alias, scope, acceptor)
+    log.trace("generate:", ast.details(node))
+    if ast.is_class(node) then
+        if scope == ast.Class then
+            for _,item in ipairs(shift_member_items(node, alias)) do
+                acceptor(item)
             end
         else
-            for _,item in ipairs(shift_free_items(preceding_node, typealias_node)) do
-                table.insert(items, item)
+            for _,item in ipairs(shift_free_items(node, alias)) do
+                acceptor(item)
             end
         end
     end
-    if ast.is_class(enclosing_node) then
-        for _,item in ipairs(shift_member_items(enclosing_node, typealias_node)) do
-            table.insert(items, item)
-        end
-    end
-
-    return items
 end
 
 ---------------------------------------------------------------------------------------------------
 --- Info callback
 ---------------------------------------------------------------------------------------------------
 function M.info()
+    log.trace("info")
     return {
         { G.class.shift.trigger or 'friend/inline',  "Class output stream shift operator" }
     }
@@ -214,9 +170,11 @@ end
 --- Initialization callback. Capture relevant parts of the configuration.
 ---------------------------------------------------------------------------------------------------
 function M.setup(opts)
+    log.trace("setup")
     G.keepindent = opts.keepindent
     G.attribute  = opts.attribute
     G.class      = opts.class
+    log.trace("setup:", G)
 end
 
 return M

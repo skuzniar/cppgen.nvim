@@ -212,7 +212,9 @@ M.default = {
             -- Name of the conversion function. Also used as a completion trigger.
             name = "enum_cast",
             -- Additional completion trigger if present.
-            trigger = "enum_cast"
+            trigger = "enum_cast",
+            -- Combine all cast snippets into one.
+            combine = true
         },
 
         -- Terse and verbose JSON serialization

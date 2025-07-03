@@ -12,7 +12,7 @@ local utl = require('cppgen.generators.util')
 local G = {}
 
 ---------------------------------------------------------------------------------------------------
--- Local parameters for code generation.
+-- Private parameters for code generation.
 ---------------------------------------------------------------------------------------------------
 local P = {}
 
@@ -205,10 +205,10 @@ local function enum_cast_snippets(node, alias, specifier, throw)
     for _,l in ipairs(cptrfwd) do log.debug(l) end
     for _,l in ipairs(strnfwd) do log.debug(l) end
 
-    if P.strict then
-        return { primary, cptrfwd, strnfwd }
+    if G.enum.cast.combine then
+        return { utl.combine(primary, cptrfwd, strnfwd) }
     end
-    return { utl.combine(primary, cptrfwd, strnfwd) }
+    return { primary, cptrfwd, strnfwd }
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -303,24 +303,11 @@ end
 ---------------------------------------------------------------------------------------------------
 local function cast_member_items(node, alias)
     log.trace("enum_cast_member_items:", ast.details(node))
-    if P.strict then
-        return cast_items(
-            G.enum.cast.enum_cast.enabled           and enum_cast_snippets (node, alias, 'template <>', true ) or {},
-            G.enum.cast.enum_cast_no_throw.enabled  and enum_cast_snippets (node, alias, 'template <>', false) or {},
-            G.enum.cast.value_cast.enabled          and value_cast_snippets(node, alias, 'template <>', true ) or {},
-            G.enum.cast.value_cast_no_throw.enabled and value_cast_snippets(node, alias, 'template <>', false) or {})
-    end
     return cast_items(
-        {
-            utl.flatten(
-                G.enum.cast.enum_cast.enabled           and enum_cast_snippets (node, alias, 'template <>', true ) or {},
-                G.enum.cast.enum_cast_no_throw.enabled  and enum_cast_snippets (node, alias, 'template <>', false) or {})
-        },
-        {
-            utl.flatten(
-                G.enum.cast.value_cast.enabled          and value_cast_snippets(node, alias, 'template <>', true ) or {},
-                G.enum.cast.value_cast_no_throw.enabled and value_cast_snippets(node, alias, 'template <>', false) or {})
-        })
+        G.enum.cast.enum_cast.enabled           and enum_cast_snippets (node, alias, 'template <>', true ) or {},
+        G.enum.cast.enum_cast_no_throw.enabled  and enum_cast_snippets (node, alias, 'template <>', false) or {},
+        G.enum.cast.value_cast.enabled          and value_cast_snippets(node, alias, 'template <>', true ) or {},
+        G.enum.cast.value_cast_no_throw.enabled and value_cast_snippets(node, alias, 'template <>', false) or {})
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -328,24 +315,11 @@ end
 ---------------------------------------------------------------------------------------------------
 local function cast_free_items(node, alias)
     log.trace("enum_cast_free_items:", ast.details(node))
-    if P.strict then
-        return cast_items(
-            G.enum.cast.enum_cast.enabled           and enum_cast_snippets (node, alias, 'template <> inline', true ) or {},
-            G.enum.cast.enum_cast_no_throw.enabled  and enum_cast_snippets (node, alias, 'template <> inline', false) or {},
-            G.enum.cast.value_cast.enabled          and value_cast_snippets(node, alias, 'template <> inline', true ) or {},
-            G.enum.cast.value_cast_no_throw.enabled and value_cast_snippets(node, alias, 'template <> inline', false) or {})
-    end
     return cast_items(
-        {
-            utl.flatten(
-                G.enum.cast.enum_cast.enabled           and enum_cast_snippets (node, alias, 'template <> inline', true ) or {},
-                G.enum.cast.enum_cast_no_throw.enabled  and enum_cast_snippets (node, alias, 'template <> inline', false) or {})
-        },
-        {
-            utl.flatten(
-                G.enum.cast.value_cast.enabled          and value_cast_snippets(node, alias, 'template <> inline', true ) or {},
-                G.enum.cast.value_cast_no_throw.enabled and value_cast_snippets(node, alias, 'template <> inline', false) or {})
-        })
+        G.enum.cast.enum_cast.enabled           and enum_cast_snippets (node, alias, 'template <> inline', true ) or {},
+        G.enum.cast.enum_cast_no_throw.enabled  and enum_cast_snippets (node, alias, 'template <> inline', false) or {},
+        G.enum.cast.value_cast.enabled          and value_cast_snippets(node, alias, 'template <> inline', true ) or {},
+        G.enum.cast.value_cast_no_throw.enabled and value_cast_snippets(node, alias, 'template <> inline', false) or {})
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -422,13 +396,9 @@ local function shift_free_items(node, alias)
 end
 
 ---------------------------------------------------------------------------------------------------
---- Exported functions
+--- Public interface.
 ---------------------------------------------------------------------------------------------------
 local M = {}
-
-local enclosing_node = nil
-local preceding_node = nil
-local typealias_node = nil
 
 ---------------------------------------------------------------------------------------------------
 --- Generator will call this method to get kind of nodes that are of interest to each generator.
@@ -439,77 +409,44 @@ function M.digs()
 end
 
 ---------------------------------------------------------------------------------------------------
---- Generator will call this method before presenting a set of new candidate nodes
+--- Generator will call this method to get generated code
 ---------------------------------------------------------------------------------------------------
-function M.reset()
-    log.trace("reset:")
-    enclosing_node = nil
-    preceding_node = nil
-    typealias_node = nil
-end
+function M.generate(node, alias, scope, acceptor)
+    log.trace("generate:", ast.details(node))
 
----------------------------------------------------------------------------------------------------
---- Generator will call this method with a node, optional type alias and a node location
----------------------------------------------------------------------------------------------------
-function M.visit(node, alias, location)
-    -- We can generate conversion function for preceding enumeration node
-    if location == ast.Precedes and ast.is_enum(node) then
-        log.debug("visit:", "Accepted preceding node", ast.details(node))
-        preceding_node = node
-    end
-    -- We capture enclosing class node since the specifier for the enum conversion depends on it
-    if location == ast.Encloses and ast.is_class(node) then
-        log.debug("visit:", "Accepted enclosing node", ast.details(node))
-        enclosing_node = node
-    end
-    typealias_node = alias
-end
-
----------------------------------------------------------------------------------------------------
---- Generator will call this method to check if the module can generate code
----------------------------------------------------------------------------------------------------
-function M.available()
-    return preceding_node ~= nil
-end
-
--- Add elements of one table into another table
-local function add_to(to, from)
-    for _,item in ipairs(from) do
-        table.insert(to, item)
-    end
-end
----------------------------------------------------------------------------------------------------
--- Generate from string functions for an enum nodes.
----------------------------------------------------------------------------------------------------
-function M.generate(strict)
-    log.trace("generate:", ast.details(preceding_node), ast.details(enclosing_node))
-
-    local items = {}
-
-    P.strict = strict
-    if ast.is_enum(preceding_node) then
-        if ast.is_class(enclosing_node) then
-            add_to(items, to_string_member_items(preceding_node, typealias_node))
-            add_to(items, cast_member_items(preceding_node, typealias_node))
-            add_to(items, shift_member_items(preceding_node, typealias_node))
+    if ast.is_enum(node) then
+        if scope == ast.Class then
+            for _,item in ipairs(to_string_member_items(node, alias)) do
+                acceptor(item)
+            end
+            for _,item in ipairs(cast_member_items(node, alias)) do
+                acceptor(item)
+            end
+            for _,item in ipairs(shift_member_items(node, alias)) do
+                acceptor(item)
+            end
         else
-            add_to(items, to_string_free_items(preceding_node, typealias_node))
-            add_to(items, cast_free_items(preceding_node, typealias_node))
-            add_to(items, shift_free_items(preceding_node, typealias_node))
+            for _,item in ipairs(to_string_free_items(node, alias)) do
+                acceptor(item)
+            end
+            for _,item in ipairs(cast_free_items(node, alias)) do
+                acceptor(item)
+            end
+            for _,item in ipairs(shift_free_items(node, alias)) do
+                acceptor(item)
+            end
         end
     end
-
-    return items
 end
 
 ---------------------------------------------------------------------------------------------------
 --- Info callback
 ---------------------------------------------------------------------------------------------------
-local function combine(name, trigger)
-    return name == trigger and name or name .. ' or ' .. trigger
-end
-
 function M.info()
+    local function combine(name, trigger)
+        return name == trigger and name or name .. ' or ' .. trigger
+    end
+
     local info = {}
     table.insert(info, { combine(G.enum.to_string.name, G.enum.to_string.trigger), "Enum class to string converter" })
 
@@ -536,9 +473,11 @@ end
 --- Initialization callback. Capture relevant parts of the configuration.
 ---------------------------------------------------------------------------------------------------
 function M.setup(opts)
+    log.trace("setup")
     G.keepindent = opts.keepindent
     G.attribute  = opts.attribute
     G.enum       = opts.enum
+    log.trace("setup:", G)
 end
 
 return M
