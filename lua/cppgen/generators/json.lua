@@ -218,16 +218,16 @@ local function save_enum_snippet(node, alias)
     table.insert(lines, apply('inline <attribute> std::string <functionname>(<classname> o, bool verbose)'))
     table.insert(lines, apply('{'))
 
-    if G.keepindent then
-        table.insert(lines, apply('<indent>// clang-format off'))
-    end
-
     -- Helper function to generate switch statement
     local function switch(lines, records, default, extraindent)
         local indent = extraindent and '<indent>' or ''
 
         table.insert(lines, apply(indent .. '<indent>switch(o)'))
         table.insert(lines, apply(indent .. '<indent>{'))
+
+        if G.keepindent then
+            table.insert(lines, apply('<indent><indent>// clang-format off'))
+        end
 
         local maxllen, maxvlen = max_lengths(records)
         for _,r in ipairs(records) do
@@ -241,6 +241,10 @@ local function save_enum_snippet(node, alias)
         if default then
             P.default = default
             table.insert(lines, apply(indent .. '<indent><indent>default: return <functionname>(<default>, verbose); break;'))
+        end
+
+        if G.keepindent then
+            table.insert(lines, apply('<indent><indent>// clang-format on'))
         end
 
         table.insert(lines, apply(indent .. '<indent>};'))
@@ -277,9 +281,6 @@ local function save_enum_snippet(node, alias)
 
     table.insert(lines, apply('<indent>return <functionname>("", verbose);'))
 
-    if G.keepindent then
-        table.insert(lines, apply('<indent>// clang-format on'))
-    end
     table.insert(lines, apply('}'))
 
     for _,l in ipairs(lines) do log.debug(l) end

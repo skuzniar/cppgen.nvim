@@ -2,17 +2,17 @@
 
 Context-Sensitive Highly Customizable C++ Code Generator for Neovim. This tool is designed to streamline some of the most mundane aspects of the coding process. 
 
-Several Large Language Models (LLMs) can handle a wide range of coding tasks. However, there are reasons why someone might choose to use a custom code generator.
+Several large language models (LLMs) can handle a wide range of coding tasks. However, there are reasons why someone might choose to use a custom code generator.
 
-- **Specific Requirements**: Custom generator can be tailored to match a particular coding style.
+- **Specific Requirements**: The custom generator can be tailored to match a particular coding style.
 - **Consistency**: Within a given context, custom generators will always generate the same code. 
 - **Customization**: With a custom solution, you have full control over the templates and rules used for code generation.
 - **Performance**: A code generator that runs locally is often faster than one that interacts with the remote system.
 
 ## Design Philosophy
 **cppgen.nvim** acts as a source of code fragments for the completion engine. While in the insert mode, the location of the cursor within the buffer determines 
-the current context. Certain language constructs, like classes, enumerations, or switch statements, located above or around the cursor may trigger code generation. 
-**cppgen.nvim** uses LSP server to get the type information necessary to generate code.
+the current context. Certain language constructs, like classes, enumerations, or switch statements, located above or around the cursor, may trigger code generation. 
+**cppgen.nvim** uses LSP server to get the type information necessary for code generation.
 
 ## Features
 **cppgen.nvim** can currently generate the following code snippets.
