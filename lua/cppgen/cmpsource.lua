@@ -28,7 +28,7 @@ local L = {
 --- Exported functions
 local M = {}
 
---- Scan current AST, find immediately preceding and smallest enclosing nodes that are relevant.
+--- Scan current AST, find immediately preceding and smallest enclosing relevant nodes.
 local function find_proximity_nodes(symbols, line)
     log.trace("find_proximity_nodes at line", line)
     local preceding, enclosing = nil, nil
@@ -52,11 +52,30 @@ local function find_proximity_nodes(symbols, line)
             end
         end
     )
-    log.trace("Found relavant nodes:", ast.details(preceding), ast.details(enclosing))
+    log.debug("Found proximity node(s):", ast.details(preceding), ast.details(enclosing))
     return preceding, enclosing
 end
 
---- Given preceding and closest enclosing nodes, invoke proper callback on them.
+--- Scan current AST, find immediately preceding and smallest enclosing relevant nodes.
+local function find_preceding_nodes(symbols, line)
+    log.trace("find_preceding_nodes at line", line)
+    local nodes = {}
+    ast.dfs(symbols,
+        function(node)
+            log.trace("Looking at node", ast.details(node), "phantom=", ast.phantom(node), "encloses=", ast.encloses(node, line))
+            return true
+        end,
+        function(node)
+            if gen.is_relevant(node) then
+                table.insert(nodes, node)
+            end
+        end
+    )
+    log.debug("Found", #nodes, "preceding node(s)")
+    return nodes
+end
+
+--- Locate immediately preceding and smallest enclosing nodes and invoke given callback on them.
 local function visit_proximity_nodes(symbols, line, callback)
     log.trace("Looking for proximity nodes at line", line)
     local preceding, enclosing = find_proximity_nodes(symbols, line)
@@ -79,8 +98,25 @@ local function visit_proximity_nodes(symbols, line, callback)
     end
 end
 
+--- Locate immediately preceding and smallest enclosing nodes and invoke given callback on them.
+local function visit_preceding_nodes(symbols, line, callback)
+    log.trace("Looking for preceding nodes at line", line)
+    for _,p in ipairs(find_preceding_nodes(symbols, line)) do
+        log.debug("Selected preceding node", ast.details(p))
+        local aliastype = ast.alias_type(p)
+        if aliastype and L.lspclient then
+            lsp.get_type_definition(L.lspclient, aliastype, function(node)
+                log.debug("Resolved type alias:", ast.details(p), "using:", ast.details(node), " line:", line)
+                callback(node, p, ast.Other)
+            end)
+        else
+            callback(p, nil, ast.Other)
+        end
+    end
+end
+
 ---------------------------------------------------------------------------------------------------
---- Visit AST nodes
+--- Visit AST nodes in two passes, looking for proximity and preceding nodes.
 ---------------------------------------------------------------------------------------------------
 local function visit(symbols, line)
     log.trace("visit line:", line)
@@ -88,7 +124,15 @@ local function visit(symbols, line)
         function(node, alias, scope)
             gen.generate(node, alias, scope, function(snippet)
                 table.insert(L.snippets, snippet)
-                log.info("Collected", #L.snippets, "snippet(s)")
+                log.debug("Collected", #L.snippets, "proximity snippet(s)")
+            end)
+        end
+    )
+    visit_preceding_nodes(symbols, line,
+        function(node, alias, scope)
+            gen.generate(node, alias, scope, function(snippet)
+                table.insert(L.snippets, snippet)
+                log.debug("Collected", #L.snippets, "preceding snippet(s)")
             end)
         end
     )
