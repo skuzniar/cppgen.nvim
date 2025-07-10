@@ -9,8 +9,11 @@ local cmp = require('cmp')
 ---------------------------------------------------------------------------------------------------
 -- Context sensitive code completion source. When the user enters insert mode we capture current 
 -- line number and send AST request. When the AST arrives we locate relevant nodes and try to 
--- generate code from them. For the code completion the only relevant nodes are the smallest 
--- enclosing node and the immediately preceding node, provided we can generate code from them.
+-- generate code from them. For the code completion there are two kinds of relevant nodes. The 
+-- first are the proximity nodes, one being the smallest enclosing node and the othet the 
+-- immediately preceding node. The second kind are all the preceding nodes. We use the proximity 
+-- nodes to build context sensitive code completion. The second kind is suitable for bulk code 
+-- generation.
 ---------------------------------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------------------------------
@@ -26,8 +29,8 @@ local L = {
 local M = {}
 
 --- Scan current AST, find immediately preceding and smallest enclosing nodes that are relevant.
-local function find_relevant_nodes(symbols, line)
-    log.trace("find_relevant_nodes at line", line)
+local function find_proximity_nodes(symbols, line)
+    log.trace("find_proximity_nodes at line", line)
     local preceding, enclosing = nil, nil
     ast.dfs(symbols,
         function(node)
@@ -54,9 +57,9 @@ local function find_relevant_nodes(symbols, line)
 end
 
 --- Given preceding and closest enclosing nodes, invoke proper callback on them.
-local function visit_relevant_nodes(symbols, line, callback)
-    log.trace("Looking for relevant nodes at line", line)
-    local preceding, enclosing = find_relevant_nodes(symbols, line)
+local function visit_proximity_nodes(symbols, line, callback)
+    log.trace("Looking for proximity nodes at line", line)
+    local preceding, enclosing = find_proximity_nodes(symbols, line)
     local scope = ast.is_class(enclosing) and ast.Class or ast.Other
     if preceding then
         log.debug("Selected preceding node", ast.details(preceding))
@@ -81,7 +84,7 @@ end
 ---------------------------------------------------------------------------------------------------
 local function visit(symbols, line)
     log.trace("visit line:", line)
-    visit_relevant_nodes(symbols, line,
+    visit_proximity_nodes(symbols, line,
         function(node, alias, scope)
             gen.generate(node, alias, scope, function(snippet)
                 table.insert(L.snippets, snippet)
