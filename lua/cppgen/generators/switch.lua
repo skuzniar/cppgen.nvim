@@ -22,9 +22,9 @@ local L = {
     lspclient = nil
 }
 
--- Apply parameters to the format string 
+-- Apply parameters to the format string
 local function apply(format)
-    format = string.gsub(format, "<default>",   P.default   or '')
+    format = string.gsub(format, "<default>", P.default or '')
     return utl.apply(P, format)
 end
 
@@ -49,7 +49,7 @@ end
 local function max_lengths(records)
     local max_lab_len = 0
     local max_val_len = 0
-    for _,r in ipairs(records) do
+    for _, r in ipairs(records) do
         max_lab_len = math.max(max_lab_len, string.len(r.label))
         max_val_len = math.max(max_val_len, string.len(r.value))
     end
@@ -62,19 +62,19 @@ end
 local function case_enum_snippet(defnode, refnode)
     log.trace("case_enum_snippet:", ast.details(defnode))
 
-    P.classname = ast.name(defnode)
-    P.indent    = string.rep(' ', vim.lsp.util.get_effective_tabstop())
+    P.classname            = ast.name(defnode)
+    P.indent               = string.rep(' ', vim.lsp.util.get_effective_tabstop())
 
-    local records = enum_labels_and_values(defnode)
+    local records          = enum_labels_and_values(defnode)
     local maxllen, maxvlen = max_lengths(records)
 
-    local lines = {}
+    local lines            = {}
 
-    for _,r in ipairs(records) do
-        P.label     = r.label
-        P.value     = r.value
-        P.labelpad  = string.rep(' ', maxllen - string.len(P.label))
-        P.valuepad  = string.rep(' ', maxvlen - string.len(P.value))
+    for _, r in ipairs(records) do
+        P.label    = r.label
+        P.value    = r.value
+        P.labelpad = string.rep(' ', maxllen - string.len(P.label))
+        P.valuepad = string.rep(' ', maxvlen - string.len(P.value))
 
         table.insert(lines, apply('case <label>:'))
         table.insert(lines, apply('<indent><value>;'))
@@ -88,7 +88,7 @@ local function case_enum_snippet(defnode, refnode)
         table.insert(lines, apply('<indent>break;'))
     end
 
-    for _,l in ipairs(lines) do log.debug(l) end
+    for _, l in ipairs(lines) do log.debug(l) end
     return lines
 end
 
@@ -115,7 +115,7 @@ local function get_switch_condition_node(node)
                 cond = n
             end
         end
-        )
+    )
     return cond
 end
 
@@ -146,15 +146,17 @@ end
 function M.generate(node, alias, scope, acceptor)
     log.trace("generate:", ast.details(node))
 
-    local cond = get_switch_condition_node(node)
-    if cond then
-        log.debug("generate:", "condition node", ast.details(cond))
-        lsp.get_type_definition(L.lspclient, cond, function(n)
-            log.debug("generate:", "definition node", ast.details(n))
-            for _,item in ipairs(case_enum_item(n, cond)) do
-                acceptor(item)
-            end
-        end)
+    if G.enum.switch.enabled then
+        local cond = get_switch_condition_node(node)
+        if cond then
+            log.debug("generate:", "condition node", ast.details(cond))
+            lsp.get_type_definition(L.lspclient, cond, function(n)
+                log.debug("generate:", "definition node", ast.details(n))
+                for _, item in ipairs(case_enum_item(n, cond)) do
+                    acceptor(item)
+                end
+            end)
+        end
     end
 end
 

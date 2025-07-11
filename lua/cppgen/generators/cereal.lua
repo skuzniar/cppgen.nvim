@@ -21,17 +21,17 @@ local function max_lengths(records)
     local max_lab_len = 0
     local max_val_len = 0
 
-    for _,r in ipairs(records) do
+    for _, r in ipairs(records) do
         max_lab_len = math.max(max_lab_len, string.len(r.label))
         max_val_len = math.max(max_val_len, string.len(r.value))
     end
     return max_lab_len, max_val_len
 end
 
--- Apply parameters to the format string 
+-- Apply parameters to the format string
 local function apply(format)
-    format = string.gsub(format, "<nullcheck>",    P.nullcheck    or '')
-    format = string.gsub(format, "<nullvalue>",    P.nullvalue    or '')
+    format = string.gsub(format, "<nullcheck>", P.nullcheck or '')
+    format = string.gsub(format, "<nullvalue>", P.nullvalue or '')
 
     return utl.apply(P, format)
 end
@@ -85,16 +85,16 @@ end
 local function save_class_snippet(node, alias, specifier, member)
     log.debug("save_class_snippet:", ast.details(node))
 
-    P.specifier    = specifier
-    P.attribute    = G.attribute and ' ' .. G.attribute or ''
-    P.classname    = alias and ast.name(alias) or ast.name(node)
-    P.functionname = G.class.cereal.name
-    P.indent       = string.rep(' ', vim.lsp.util.get_effective_tabstop())
+    P.specifier            = specifier
+    P.attribute            = G.attribute and ' ' .. G.attribute or ''
+    P.classname            = alias and ast.name(alias) or ast.name(node)
+    P.functionname         = G.class.cereal.name
+    P.indent               = string.rep(' ', vim.lsp.util.get_effective_tabstop())
 
-    local records = member and class_labels_and_values(node) or class_labels_and_values(node, 'o')
+    local records          = member and class_labels_and_values(node) or class_labels_and_values(node, 'o')
     local maxllen, maxvlen = max_lengths(records)
 
-    local lines = {}
+    local lines            = {}
 
     if member then
         table.insert(lines, apply('<specifier><attribute> void <functionname>(Archive& archive) const'))
@@ -128,7 +128,7 @@ local function save_class_snippet(node, alias, specifier, member)
     end
 
     local idx = 1
-    for _,r in ipairs(records) do
+    for _, r in ipairs(records) do
         P.fieldname = r.field
         P.label     = r.label
         P.value     = r.value
@@ -154,7 +154,7 @@ local function save_class_snippet(node, alias, specifier, member)
     end
     table.insert(lines, apply('}'))
 
-    for _,l in ipairs(lines) do log.debug(l) end
+    for _, l in ipairs(lines) do log.debug(l) end
     return lines
 end
 
@@ -198,14 +198,16 @@ end
 function M.generate(node, alias, scope, acceptor)
     log.trace("generate:", ast.details(node))
 
-    if ast.is_class(node) then
-        if scope == ast.Class then
-            for _,item in ipairs(save_class_member_items(node, alias)) do
-                acceptor(item)
-            end
-        else
-            for _,item in ipairs(save_class_free_items(node, alias)) do
-                acceptor(item)
+    if G.class.cereal.enabled then
+        if ast.is_class(node) then
+            if scope == ast.Class then
+                for _, item in ipairs(save_class_member_items(node, alias)) do
+                    acceptor(item)
+                end
+            else
+                for _, item in ipairs(save_class_free_items(node, alias)) do
+                    acceptor(item)
+                end
             end
         end
     end
@@ -224,7 +226,8 @@ function M.info()
     end
 
     if G.class.cereal.enabled then
-        table.insert(info, { combine(G.class.cereal.name, G.class.cereal.trigger), "Class serialization that uses cereal library" })
+        table.insert(info,
+            { combine(G.class.cereal.name, G.class.cereal.trigger), "Class serialization that uses cereal library" })
     end
 
     return info

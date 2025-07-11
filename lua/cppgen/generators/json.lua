@@ -21,18 +21,18 @@ local function max_lengths(records)
     local max_lab_len = 0
     local max_val_len = 0
 
-    for _,r in ipairs(records) do
+    for _, r in ipairs(records) do
         max_lab_len = math.max(max_lab_len, string.len(r.label))
         max_val_len = math.max(max_val_len, string.len(r.value))
     end
     return max_lab_len, max_val_len
 end
 
--- Apply parameters to the format string 
+-- Apply parameters to the format string
 local function apply(format)
     format = string.gsub(format, "<nullcheck>", P.nullcheck or '')
     format = string.gsub(format, "<nullvalue>", P.nullvalue or '')
-    format = string.gsub(format, "<default>",   P.default   or '')
+    format = string.gsub(format, "<default>", P.default or '')
 
     return utl.apply(P, format)
 end
@@ -86,15 +86,15 @@ end
 local function save_class_snippet(node, alias, friend)
     log.debug("save_class_snippet:", ast.details(node))
 
-    P.attribute    = G.attribute or ''
-    P.classname    = alias and ast.name(alias) or ast.name(node)
-    P.functionname = G.class.json.name
-    P.indent       = string.rep(' ', vim.lsp.util.get_effective_tabstop())
+    P.attribute            = G.attribute or ''
+    P.classname            = alias and ast.name(alias) or ast.name(node)
+    P.functionname         = G.class.json.name
+    P.indent               = string.rep(' ', vim.lsp.util.get_effective_tabstop())
 
-    local records = class_labels_and_values(node, 'o')
+    local records          = class_labels_and_values(node, 'o')
     local maxllen, maxvlen = max_lengths(records)
 
-    local lines = {}
+    local lines            = {}
 
     if friend then
         table.insert(lines, apply('friend <attribute> std::string <functionname>(const <classname>& o, bool verbose)'))
@@ -110,13 +110,16 @@ local function save_class_snippet(node, alias, friend)
 
     --- Get straight - no null check code variation
     local function codex()
-        return 'std::string() + <dquote> + "<label>"<labelpad> + <dquote> + <colon> + <functionname>(<value><valuepad>, verbose);'
+        return
+        'std::string() + <dquote> + "<label>"<labelpad> + <dquote> + <colon> + <functionname>(<value><valuepad>, verbose);'
     end
     local function codez()
-        return 'std::string() + <dquote> + "<label>"<labelpad> + <dquote> + <colon> + (<nullcheck><valuepad> ? <functionname>(<nullvalue>, verbose) : <functionname>(<value><valuepad>, verbose));'
+        return
+        'std::string() + <dquote> + "<label>"<labelpad> + <dquote> + <colon> + (<nullcheck><valuepad> ? <functionname>(<nullvalue>, verbose) : <functionname>(<value><valuepad>, verbose));'
     end
     local function codey()
-        return '(<nullcheck><valuepad> ? "" : std::string() + <dquote> + "<label>"<labelpad> + <dquote> + <colon> + <functionname>(<value><valuepad>, verbose));'
+        return
+        '(<nullcheck><valuepad> ? "" : std::string() + <dquote> + "<label>"<labelpad> + <dquote> + <colon> + <functionname>(<value><valuepad>, verbose));'
     end
 
     --- Get no-null-check code variation
@@ -135,7 +138,7 @@ local function save_class_snippet(node, alias, friend)
     end
 
     local idx = 1
-    for _,r in ipairs(records) do
+    for _, r in ipairs(records) do
         P.fieldname = r.field
         P.label     = r.label
         P.value     = r.value
@@ -163,7 +166,7 @@ local function save_class_snippet(node, alias, friend)
     table.insert(lines, apply('<indent>return s;'))
     table.insert(lines, apply('}'))
 
-    for _,l in ipairs(lines) do log.debug(l) end
+    for _, l in ipairs(lines) do log.debug(l) end
     return lines
 end
 
@@ -193,7 +196,7 @@ local function enum_labels_and_values(node, alias, vf)
     log.trace("labels_and_values:", ast.details(node))
 
     local lsandvs = {}
-    for _,r in ipairs(utl.enum_records(node)) do
+    for _, r in ipairs(utl.enum_records(node)) do
         local record = {}
         record.label = (alias and ast.name(alias) or ast.name(node)) .. '::' .. r.label
         record.value = vf(r.label, r.value) or r.label
@@ -213,7 +216,7 @@ local function save_enum_snippet(node, alias)
     P.functionname = G.enum.json.name
     P.indent       = string.rep(' ', vim.lsp.util.get_effective_tabstop())
 
-    local lines = {}
+    local lines    = {}
 
     table.insert(lines, apply('inline <attribute> std::string <functionname>(<classname> o, bool verbose)'))
     table.insert(lines, apply('{'))
@@ -230,17 +233,20 @@ local function save_enum_snippet(node, alias)
         end
 
         local maxllen, maxvlen = max_lengths(records)
-        for _,r in ipairs(records) do
-            P.label     = r.label
-            P.value     = r.value
-            P.labelpad  = string.rep(' ', maxllen - string.len(r.label))
-            P.valuepad  = string.rep(' ', maxvlen - string.len(r.value))
-            table.insert(lines, apply(indent .. '<indent><indent>case <label>:<labelpad> return <functionname>(<value><valuepad>, verbose); break;'))
+        for _, r in ipairs(records) do
+            P.label    = r.label
+            P.value    = r.value
+            P.labelpad = string.rep(' ', maxllen - string.len(r.label))
+            P.valuepad = string.rep(' ', maxvlen - string.len(r.value))
+            table.insert(lines,
+                apply(indent ..
+                '<indent><indent>case <label>:<labelpad> return <functionname>(<value><valuepad>, verbose); break;'))
         end
 
         if default then
             P.default = default
-            table.insert(lines, apply(indent .. '<indent><indent>default: return <functionname>(<default>, verbose); break;'))
+            table.insert(lines,
+                apply(indent .. '<indent><indent>default: return <functionname>(<default>, verbose); break;'))
         end
 
         if G.keepindent then
@@ -253,7 +259,7 @@ local function save_enum_snippet(node, alias)
     --- Compare labels and values
     local function same(lhs, rhs)
         if #lhs == #rhs then
-            for i=1,#lhs do
+            for i = 1, #lhs do
                 if lhs[i].label ~= rhs[i].label or lhs[i].value ~= rhs[i].value then
                     return false
                 end
@@ -267,7 +273,7 @@ local function save_enum_snippet(node, alias)
     local trecords = enum_labels_and_values(node, alias, G.enum.json.terse.value)
 
     local vdefault = G.enum.json.verbose.default and G.enum.json.verbose.default(P.classname, 'o')
-    local tdefault = G.enum.json.terse.default   and G.enum.json.terse.default(P.classname, 'o')
+    local tdefault = G.enum.json.terse.default and G.enum.json.terse.default(P.classname, 'o')
 
     if (same(vrecords, trecords)) then
         switch(lines, vrecords, vdefault)
@@ -283,7 +289,7 @@ local function save_enum_snippet(node, alias)
 
     table.insert(lines, apply('}'))
 
-    for _,l in ipairs(lines) do log.debug(l) end
+    for _, l in ipairs(lines) do log.debug(l) end
     return lines
 end
 
@@ -322,20 +328,22 @@ end
 function M.generate(node, alias, scope, acceptor)
     log.trace("generate:", ast.details(node))
 
-    if ast.is_class(node) then
-        if scope == ast.Class then
-            for _,item in ipairs(save_class_friend_items(node, alias)) do
-                acceptor(item)
-            end
-        else
-            for _,item in ipairs(save_class_free_items(node, alias)) do
-                acceptor(item)
+    if G.class.json.enabled then
+        if ast.is_class(node) then
+            if scope == ast.Class then
+                for _, item in ipairs(save_class_friend_items(node, alias)) do
+                    acceptor(item)
+                end
+            else
+                for _, item in ipairs(save_class_free_items(node, alias)) do
+                    acceptor(item)
+                end
             end
         end
     end
 
     if ast.is_enum(node) then
-        for _,item in ipairs(save_enum_free_items(node, alias)) do
+        for _, item in ipairs(save_enum_free_items(node, alias)) do
             acceptor(item)
         end
     end
