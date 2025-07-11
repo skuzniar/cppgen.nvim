@@ -448,7 +448,9 @@ function M.info()
     end
 
     local info = {}
-    table.insert(info, { combine(G.enum.to_string.name, G.enum.to_string.trigger), "Enum class to string converter" })
+    if G.enum.to_string.enabled then
+        table.insert(info, { combine(G.enum.to_string.name, G.enum.to_string.trigger), "Enum class to string converter" })
+    end
 
     local trigger = combine(G.enum.cast.name, G.enum.cast.trigger)
     if G.enum.cast.enum_cast.enabled then
@@ -464,7 +466,9 @@ function M.info()
         table.insert(info, { trigger, "Non throwing constructor of enum class from the underlying type" })
     end
 
-    table.insert(info, { G.enum.shift.trigger, "Enum class output stream shift operator" })
+    if G.enum.shift.enabled then
+        table.insert(info, { G.enum.shift.trigger, "Enum class output stream shift operator" })
+    end
 
     return info
 end

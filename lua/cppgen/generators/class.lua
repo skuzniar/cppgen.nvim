@@ -161,9 +161,13 @@ end
 ---------------------------------------------------------------------------------------------------
 function M.info()
     log.trace("info")
-    return {
-        { G.class.shift.trigger or 'friend/inline',  "Class output stream shift operator" }
-    }
+    local info = {}
+
+    if G.class.shift.enabled then
+        table.insert(info, { G.class.shift.trigger, "Class output stream shift operator" })
+    end
+
+    return info
 end
 
 ---------------------------------------------------------------------------------------------------

@@ -163,9 +163,13 @@ end
 ---------------------------------------------------------------------------------------------------
 function M.info()
     log.trace("info")
-    return {
-        { G.enum.switch.trigger, "Case switch statements from enumeration" }
-    }
+    local info = {}
+
+    if G.enum.switch.enabled then
+        table.insert(info, { G.enum.switch.trigger, "Case switch statements from enumeration" })
+    end
+
+    return info
 end
 
 ---------------------------------------------------------------------------------------------------

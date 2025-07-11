@@ -216,12 +216,18 @@ end
 ---------------------------------------------------------------------------------------------------
 
 function M.info()
+    log.trace("info")
+    local info = {}
+
     local function combine(name, trigger)
         return name == trigger and name or name .. ' or ' .. trigger
     end
-    return {
-        { combine(G.class.cereal.name, G.class.cereal.trigger), "Class serialization that uses cereal library" }
-    }
+
+    if G.class.cereal.enabled then
+        table.insert(info, { combine(G.class.cereal.name, G.class.cereal.trigger), "Class serialization that uses cereal library" })
+    end
+
+    return info
 end
 
 ---------------------------------------------------------------------------------------------------

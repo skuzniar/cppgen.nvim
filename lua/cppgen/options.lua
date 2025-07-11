@@ -43,11 +43,11 @@ M.default = {
 
     -- Class type snippet generator.
     class = {
-        -- Enabled by default.
-        enabled = true,
-
         -- Output stream shift operator.
         shift = {
+            -- Enabled by default.
+            enabled = true,
+
             -- String printed before any fields are printed.
             preamble  = function(classname)
                 return '[' .. classname .. ']='
@@ -124,11 +124,11 @@ M.default = {
 
     -- Enum type snippet generator.
     enum = {
-        -- Enabled by default.
-        enabled = true,
-
         -- Output stream shift operator.
         shift = {
+            -- Enabled by default.
+            enabled = true,
+
             -- Given an enumerator and optional value, return the corresponding string.
             value = function(enumerator, value)
                 if (value) then
@@ -149,6 +149,9 @@ M.default = {
 
         -- To string conversion function: std::string to_string(enum e).
         to_string = {
+            -- Enabled by default.
+            enabled = true,
+
             -- Given an enumerator and optional value, return the corresponding string.
             value = function(enumerator, value)
                 if (value) then
@@ -171,43 +174,47 @@ M.default = {
         cast = {
             -- From string conversion function. Matches enumerator name. Specializations of: template <typename T, typename F> T enum_cast(F f).
             enum_cast = {
+                -- Enabled by default.
+                enabled = true,
+
                 -- Exception expression thrown if conversion fails
                 exception = function(classname, value)
                     return 'std::out_of_range("Value " + std::string(' .. value .. ') + " is outside of ' .. classname .. ' enumeration range.")'
                 end,
-                -- By default we generate this conversion function.
-                enabled = true
             },
             -- No-throw version of enum_cast. Specializations of: template <typename T, typename F, typename E> T enum_cast(F f, E& error).
             enum_cast_no_throw = {
+                -- Enabled by default.
+                enabled = true,
+
                 -- Error type that will be passed from the conversion function.
                 errortype = 'std::string',
                 -- Error expression returned if conversion fails.
                 error = function(classname, value)
                     return '"Value " + std::string(' .. value .. ') + " is outside of ' .. classname .. ' enumeration range."'
                 end,
-                -- By default we generate this conversion function.
-                enabled = true
             },
             -- From integer conversion function. Matches enumerator value. Specializations of: template <typename T, typename F> T enum_cast(F f).
             value_cast = {
+                -- Enabled by default.
+                enabled = true,
+
                 -- Exception expression thrown if conversion fails.
                 exception = function(classname, value)
                     return 'std::out_of_range("Value " + std::to_string(' .. value .. ') + " is outside of ' .. classname .. ' enumeration range.")'
                 end,
-                -- By default we generate this conversion function.
-                enabled = true
             },
             -- No-throw version of value_cast. Specializations of: template <typename T, typename F, typename E> T enum_cast(F f, E& error).
             value_cast_no_throw = {
+                -- Enabled by default.
+                enabled = true,
+
                 -- Error type that will be passed from the conversion function.
                 errortype = 'std::string',
                 -- Exception expression thrown if conversion fails.
                 error = function(classname, value)
                     return '"Value " + std::to_string(' .. value .. ') + " is outside of ' .. classname .. ' enumeration range."'
                 end,
-                -- By default we generate this conversion function.
-                enabled = true
             },
             -- Name of the conversion function. Also used as a completion trigger.
             name = "enum_cast",
