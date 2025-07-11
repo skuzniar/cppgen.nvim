@@ -110,9 +110,7 @@ end
 local function to_string_items(lines)
     return
     {
-        { trigger = G.enum.to_string.name, lines = lines },
-        G.enum.to_string.trigger ~= G.enum.to_string.name and
-        { trigger = G.enum.to_string.trigger, lines = lines } or nil
+        { name = G.enum.to_string.name, trigger = G.enum.to_string.trigger, lines = lines }
     }
 end
 
@@ -299,10 +297,7 @@ local function cast_items(...)
     local items = {}
     for _, t in ipairs({ ... }) do
         for _, l in ipairs(t) do
-            table.insert(items, { trigger = G.enum.cast.name, lines = l })
-            if G.enum.cast.trigger ~= G.enum.cast.name then
-                table.insert(items, { trigger = G.enum.cast.trigger, lines = l })
-            end
+            table.insert(items, { name = G.enum.cast.name, trigger = G.enum.cast.trigger, lines = l })
         end
     end
     return items
@@ -388,8 +383,7 @@ end
 local function shift_items(lines)
     return
     {
-        { trigger = G.enum.shift.trigger,               lines = lines },
-        { trigger = string.match(lines[1], "^([%w]+)"), lines = lines }
+        { name = string.match(lines[1], "^([%w]+)"), trigger = G.enum.shift.trigger, lines = lines }
     }
 end
 

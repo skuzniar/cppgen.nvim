@@ -162,9 +162,7 @@ end
 local function save_class_items(lines)
     return
     {
-        { trigger = G.class.cereal.name, lines = lines },
-        G.class.cereal.trigger ~= G.class.cereal.name and
-        { trigger = G.class.cereal.trigger, lines = lines } or nil
+        { name = G.class.cereal.name, trigger = G.class.cereal.trigger, lines = lines }
     }
 end
 

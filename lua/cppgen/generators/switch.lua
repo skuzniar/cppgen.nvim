@@ -97,7 +97,7 @@ local function case_enum_item(defnode, refnode)
     log.trace("case_enum_item:", ast.details(node))
     return
     {
-        { trigger = 'case', lines = case_enum_snippet(defnode, refnode) }
+        { trigger = G.enum.switch.trigger, lines = case_enum_snippet(defnode, refnode) }
     }
 end
 

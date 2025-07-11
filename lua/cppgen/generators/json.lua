@@ -174,9 +174,7 @@ end
 local function save_class_items(lines)
     return
     {
-        { trigger = G.class.json.name, lines = lines },
-        G.class.json.trigger ~= G.class.json.name and
-        { trigger = G.class.json.trigger, lines = lines } or nil
+        { name = G.class.json.name, trigger = G.class.json.trigger, lines = lines }
     }
 end
 
@@ -297,9 +295,7 @@ end
 local function save_enum_items(lines)
     return
     {
-        { trigger = G.enum.json.name, lines = lines },
-        G.enum.json.trigger ~= G.enum.json.name and
-        { trigger = G.enum.json.trigger, lines = lines } or nil
+        { name = G.enum.json.name, trigger = G.enum.json.trigger, lines = lines }
     }
 end
 

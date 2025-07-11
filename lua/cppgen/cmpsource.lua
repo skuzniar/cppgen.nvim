@@ -7,12 +7,12 @@ local gen = require('cppgen.generator')
 local cmp = require('cmp')
 
 ---------------------------------------------------------------------------------------------------
--- Context sensitive code completion source. When the user enters insert mode we capture current 
--- line number and send AST request. When the AST arrives we locate relevant nodes and try to 
--- generate code from them. For the code completion there are two kinds of relevant nodes. The 
--- first are the proximity nodes, one being the smallest enclosing node and the othet the 
--- immediately preceding node. The second kind are all the preceding nodes. We use the proximity 
--- nodes to build context sensitive code completion. The second kind is suitable for bulk code 
+-- Context sensitive code completion source. When the user enters insert mode we capture current
+-- line number and send AST request. When the AST arrives we locate relevant nodes and try to
+-- generate code from them. For the code completion there are two kinds of relevant nodes. The
+-- first are the proximity nodes, one being the smallest enclosing node and the othet the
+-- immediately preceding node. The second kind are all the preceding nodes. We use the proximity
+-- nodes to build context sensitive code completion. The second kind is suitable for bulk code
 -- generation.
 ---------------------------------------------------------------------------------------------------
 
@@ -20,9 +20,10 @@ local cmp = require('cmp')
 -- Local parameters. LSP client instance and current editor context.
 ---------------------------------------------------------------------------------------------------
 local L = {
-    lspclient  = nil,
-    line       = nil,
-    snippets   = {},
+    lspclient          = nil,
+    line               = nil,
+    proximity_snippets = {},
+    preceding_snippets = {},
 }
 
 --- Exported functions
@@ -34,7 +35,8 @@ local function find_proximity_nodes(symbols, line)
     local preceding, enclosing = nil, nil
     ast.dfs(symbols,
         function(node)
-            log.trace("Looking at node", ast.details(node), "phantom=", ast.phantom(node), "encloses=", ast.encloses(node, line))
+            log.trace("Looking at node", ast.details(node), "phantom=", ast.phantom(node), "encloses=",
+                ast.encloses(node, line))
             return ast.encloses(node, line)
         end,
         function(node)
@@ -62,7 +64,8 @@ local function find_preceding_nodes(symbols, line)
     local nodes = {}
     ast.dfs(symbols,
         function(node)
-            log.trace("Looking at node", ast.details(node), "phantom=", ast.phantom(node), "encloses=", ast.encloses(node, line))
+            log.trace("Looking at node", ast.details(node), "phantom=", ast.phantom(node), "encloses=",
+                ast.encloses(node, line))
             return true
         end,
         function(node)
@@ -101,7 +104,7 @@ end
 --- Locate immediately preceding and smallest enclosing nodes and invoke given callback on them.
 local function visit_preceding_nodes(symbols, line, callback)
     log.trace("Looking for preceding nodes at line", line)
-    for _,p in ipairs(find_preceding_nodes(symbols, line)) do
+    for _, p in ipairs(find_preceding_nodes(symbols, line)) do
         log.debug("Selected preceding node", ast.details(p))
         local aliastype = ast.alias_type(p)
         if aliastype and L.lspclient then
@@ -123,16 +126,16 @@ local function visit(symbols, line)
     visit_proximity_nodes(symbols, line,
         function(node, alias, scope)
             gen.generate(node, alias, scope, function(snippet)
-                table.insert(L.snippets, snippet)
-                log.debug("Collected", #L.snippets, "proximity snippet(s)")
+                table.insert(L.proximity_snippets, snippet)
+                log.debug("Collected", #L.proximity_snippets, "proximity snippet(s)")
             end)
         end
     )
     visit_preceding_nodes(symbols, line,
         function(node, alias, scope)
             gen.generate(node, alias, scope, function(snippet)
-                table.insert(L.snippets, snippet)
-                log.debug("Collected", #L.snippets, "preceding snippet(s)")
+                table.insert(L.preceding_snippets, snippet)
+                log.debug("Collected", #L.preceding_snippets, "preceding snippet(s)")
             end)
         end
     )
@@ -143,19 +146,49 @@ end
 ---------------------------------------------------------------------------------------------------
 local function generate()
     local total = {}
-    for _,s in ipairs(L.snippets) do
-        table.insert(total,
-            -- Completion snippet
-            {
-                label            = s.trigger,
-                kind             = cmp.lsp.CompletionItemKind.Snippet,
-                insertTextMode   = 2,
-                insertTextFormat = cmp.lsp.InsertTextFormat.Snippet,
-                insertText       = table.concat(s.lines, '\n'),
-                documentation    = table.concat(s.lines, '\n'),
-                lines            = s.lines,
-            })
+    -- Completion snippets triggered by snippet name and optionally trigger
+    for _, s in ipairs(L.proximity_snippets) do
+        if s.name then
+            table.insert(total,
+                {
+                    label            = s.name,
+                    kind             = cmp.lsp.CompletionItemKind.Snippet,
+                    insertTextMode   = 2,
+                    insertTextFormat = cmp.lsp.InsertTextFormat.Snippet,
+                    insertText       = table.concat(s.lines, '\n'),
+                    documentation    = table.concat(s.lines, '\n'),
+                    --lines            = s.lines,
+                })
+        end
+        if s.trigger and s.trigger ~= s.name then
+            table.insert(total,
+                {
+                    label            = s.trigger,
+                    kind             = cmp.lsp.CompletionItemKind.Snippet,
+                    insertTextMode   = 2,
+                    insertTextFormat = cmp.lsp.InsertTextFormat.Snippet,
+                    insertText       = table.concat(s.lines, '\n'),
+                    documentation    = table.concat(s.lines, '\n'),
+                })
+        end
     end
+
+    local lines = {}
+    for _, s in ipairs(L.preceding_snippets) do
+        table.insert(lines, table.concat(s.lines, '\n'))
+    end
+    table.insert(total,
+        -- Batch snippet
+        {
+            label            = 'cppgen',
+            kind             = cmp.lsp.CompletionItemKind.Snippet,
+            insertTextMode   = 2,
+            insertTextFormat = cmp.lsp.InsertTextFormat.Snippet,
+            insertText       = table.concat(lines, '\n'),
+            documentation    = table.concat(lines, '\n'),
+            --lines            = lines,
+        })
+
     log.info("Collected", #total, "completion items")
     return total
 end
@@ -175,7 +208,7 @@ end
 ---------------------------------------------------------------------------------------------------
 function M:is_available()
     log.trace('is_available')
-    return next(L.snippets) ~= nil
+    return next(L.proximity_snippets) ~= nil or next(L.preceding_snippets) ~= nil
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -273,15 +306,16 @@ end
 function M.insert_enter(bufnr)
     log.trace("Entered insert mode buffer:", bufnr)
 
-    L.snippets = {}
-    L.line     = vim.api.nvim_win_get_cursor(0)[1] - 1
+    L.proximity_snippets = {}
+    L.preceding_snippets = {}
+    L.line               = vim.api.nvim_win_get_cursor(0)[1] - 1
 
     lsp.get_ast(L.lspclient, function(symbols)
         -- We may have left insert mode by the time AST arrives
         if L.line then
             visit(symbols, L.line)
-		end
-	end
+        end
+    end
     )
 end
 
@@ -302,4 +336,3 @@ function M.info()
 end
 
 return M
-

@@ -108,8 +108,7 @@ end
 local function shift_items(lines)
     return
     {
-        { trigger = G.class.shift.trigger,              lines = lines },
-        { trigger = string.match(lines[1], "^([%w]+)"), lines = lines }
+        { name = string.match(lines[1], "^([%w]+)"), trigger = G.class.shift.trigger, lines = lines }
     }
 end
 
