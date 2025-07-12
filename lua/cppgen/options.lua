@@ -41,29 +41,40 @@ M.default = {
     -- Add clang-format on/off guards around parts of generated code.
     keepindent = true,
 
+    -- Batch mode code generation. Will attempt generate code for the whole file
+    batchmode = {
+        -- Disabled by default.
+        enabled = false,
+
+        -- Visually differentiate in-context and batch mode code snippets for a given trigger
+        trigger = function(trig)
+            return trig .. '!'
+        end,
+    },
+
     -- Class type snippet generator.
     class = {
         -- Output stream shift operator.
         shift = {
             -- Enabled by default.
-            enabled = true,
+            enabled   = true,
 
             -- String printed before any fields are printed.
             preamble  = function(classname)
                 return '[' .. classname .. ']='
             end,
             -- Label part of the field.
-            label = function(classname, fieldname, camelized)
+            label     = function(classname, fieldname, camelized)
                 return camelized .. ': '
             end,
             -- Value part of the field.
-            value = function(fieldref, type)
+            value     = function(fieldref, type)
                 return fieldref
             end,
             -- Separator between fields.
             separator = "' '",
             -- Completion trigger. Will also use the first word of the function definition line.
-            trigger = "shift"
+            trigger   = "shift"
         },
 
         -- JSON serialization
@@ -139,7 +150,8 @@ M.default = {
             end,
             --  Expression for the default case. If nil, no default case will be generated.
             default = function(classname, value)
-                return 'std::to_string(static_cast<std::underlying_type_t<'..classname..'>>(' .. value .. ')) + "(Invalid ' .. classname .. ')"'
+                return 'std::to_string(static_cast<std::underlying_type_t<' ..
+                    classname .. '>>(' .. value .. ')) + "(Invalid ' .. classname .. ')"'
             end,
             -- May use to_string function
             to_string = false,
@@ -162,7 +174,8 @@ M.default = {
             end,
             --  Expression for the default case. If nil, no default case will be generated.
             default = function(classname, value)
-                return 'std::to_string(static_cast<std::underlying_type_t<'..classname..'>>(' .. value .. ')) + "(Invalid ' .. classname .. ')"'
+                return 'std::to_string(static_cast<std::underlying_type_t<' ..
+                    classname .. '>>(' .. value .. ')) + "(Invalid ' .. classname .. ')"'
             end,
             -- Name of the conversion function. Also used as a completion trigger.
             name = "to_string",
@@ -179,7 +192,8 @@ M.default = {
 
                 -- Exception expression thrown if conversion fails
                 exception = function(classname, value)
-                    return 'std::out_of_range("Value " + std::string(' .. value .. ') + " is outside of ' .. classname .. ' enumeration range.")'
+                    return 'std::out_of_range("Value " + std::string(' ..
+                        value .. ') + " is outside of ' .. classname .. ' enumeration range.")'
                 end,
             },
             -- No-throw version of enum_cast. Specializations of: template <typename T, typename F, typename E> T enum_cast(F f, E& error).
@@ -191,7 +205,8 @@ M.default = {
                 errortype = 'std::string',
                 -- Error expression returned if conversion fails.
                 error = function(classname, value)
-                    return '"Value " + std::string(' .. value .. ') + " is outside of ' .. classname .. ' enumeration range."'
+                    return '"Value " + std::string(' ..
+                        value .. ') + " is outside of ' .. classname .. ' enumeration range."'
                 end,
             },
             -- From integer conversion function. Matches enumerator value. Specializations of: template <typename T, typename F> T enum_cast(F f).
@@ -201,7 +216,8 @@ M.default = {
 
                 -- Exception expression thrown if conversion fails.
                 exception = function(classname, value)
-                    return 'std::out_of_range("Value " + std::to_string(' .. value .. ') + " is outside of ' .. classname .. ' enumeration range.")'
+                    return 'std::out_of_range("Value " + std::to_string(' ..
+                        value .. ') + " is outside of ' .. classname .. ' enumeration range.")'
                 end,
             },
             -- No-throw version of value_cast. Specializations of: template <typename T, typename F, typename E> T enum_cast(F f, E& error).
@@ -213,7 +229,8 @@ M.default = {
                 errortype = 'std::string',
                 -- Exception expression thrown if conversion fails.
                 error = function(classname, value)
-                    return '"Value " + std::to_string(' .. value .. ') + " is outside of ' .. classname .. ' enumeration range."'
+                    return '"Value " + std::to_string(' ..
+                        value .. ') + " is outside of ' .. classname .. ' enumeration range."'
                 end,
             },
             -- Name of the conversion function. Also used as a completion trigger.
@@ -232,11 +249,12 @@ M.default = {
             terse = {
                 -- Given an enumerator and optional value, return the desired string.
                 value = function(enumerator, value)
-                    return (enumerator == 'Null' or enumerator == 'null' or enumerator == 'nullvalue') and 'nullptr' or value
+                    return (enumerator == 'Null' or enumerator == 'null' or enumerator == 'nullvalue') and 'nullptr' or
+                        value
                 end,
                 --  Expression for the default case. If nil, no default case will be generated.
                 default = function(classname, value)
-                    return 'static_cast<std::underlying_type_t<'..classname..'>>(' .. value .. ')'
+                    return 'static_cast<std::underlying_type_t<' .. classname .. '>>(' .. value .. ')'
                 end,
             },
             verbose = {
@@ -253,7 +271,8 @@ M.default = {
                 end,
                 --  Expression for the default case. If nil, no default case will be generated.
                 default = function(classname, value)
-                    return 'std::to_string(static_cast<std::underlying_type_t<'..classname..'>>(' .. value .. ')) + "(Invalid ' .. classname .. ')"'
+                    return 'std::to_string(static_cast<std::underlying_type_t<' ..
+                        classname .. '>>(' .. value .. ')) + "(Invalid ' .. classname .. ')"'
                 end,
             },
 
@@ -275,7 +294,8 @@ M.default = {
             end,
             --  Expression for the default case. If nil, no default case will be generated.
             default = function(classname, value)
-                return '// "Value " + std::to_string(' .. value .. ') + " is outside of ' .. classname .. ' enumeration range."'
+                return '// "Value " + std::to_string(' ..
+                    value .. ') + " is outside of ' .. classname .. ' enumeration range."'
             end,
             -- Completion trigger.
             trigger = "case"

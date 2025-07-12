@@ -17,6 +17,11 @@ local cmp = require('cmp')
 ---------------------------------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------------------------------
+-- Global parameters for code generation. Initialized in setup.
+---------------------------------------------------------------------------------------------------
+local G = {}
+
+---------------------------------------------------------------------------------------------------
 -- Local parameters. LSP client instance and current editor context.
 ---------------------------------------------------------------------------------------------------
 local L = {
@@ -131,14 +136,16 @@ local function visit(symbols, line)
             end)
         end
     )
-    visit_preceding_nodes(symbols, line,
-        function(node, alias, scope)
-            gen.generate(node, alias, scope, function(snippet)
-                table.insert(L.preceding_snippets, snippet)
-                log.debug("Collected", #L.preceding_snippets, "preceding snippet(s)")
-            end)
-        end
-    )
+    if G.batchmode.enabled then
+        visit_preceding_nodes(symbols, line,
+            function(node, alias, scope)
+                gen.generate(node, alias, scope, function(snippet)
+                    table.insert(L.preceding_snippets, snippet)
+                    log.debug("Collected", #L.preceding_snippets, "preceding snippet(s)")
+                end)
+            end
+        )
+    end
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -172,24 +179,39 @@ local function generate()
                 })
         end
     end
+    log.info("Collected", #total, "completion items using proximity snippets")
 
-    local lines = {}
-    for _, s in ipairs(L.preceding_snippets) do
-        table.insert(lines, table.concat(s.lines, '\n'))
+    -- Batch mode code generation
+    if G.batchmode.enabled then
+        -- Group all snippets by trigger
+        local groups = {}
+        for _, s in ipairs(L.preceding_snippets) do
+            local key = s.trigger or s.name
+            if G.batchmode.trigger then
+                key = G.batchmode.trigger(key)
+            end
+            if groups[key] == nil then
+                groups[key] = {}
+            end
+            table.insert(groups[key], table.concat(s.lines, '\n'))
+        end
+
+        for k, v in pairs(groups) do
+            table.insert(total,
+                -- Batch snippet
+                {
+                    label            = k,
+                    kind             = cmp.lsp.CompletionItemKind.Snippet,
+                    insertTextMode   = 2,
+                    insertTextFormat = cmp.lsp.InsertTextFormat.Snippet,
+                    insertText       = table.concat(v, '\n'),
+                    documentation    = table.concat(v, '\n'),
+                    --lines            = lines,
+                })
+        end
+        log.info("Collected", #total, "completion items using proximity and preceding snippets")
     end
-    table.insert(total,
-        -- Batch snippet
-        {
-            label            = 'cppgen',
-            kind             = cmp.lsp.CompletionItemKind.Snippet,
-            insertTextMode   = 2,
-            insertTextFormat = cmp.lsp.InsertTextFormat.Snippet,
-            insertText       = table.concat(lines, '\n'),
-            documentation    = table.concat(lines, '\n'),
-            --lines            = lines,
-        })
 
-    log.info("Collected", #total, "completion items")
     return total
 end
 
@@ -292,6 +314,8 @@ end
 --- Initialization callback
 function M.setup(opts)
     log.trace("setup")
+    G.batchmode = opts.batchmode
+
     gen.setup(opts)
 end
 
