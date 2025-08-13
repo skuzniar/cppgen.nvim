@@ -102,39 +102,41 @@ local function save_class_snippet(node, alias, friend)
         table.insert(lines, apply('inline <attribute> std::string <functionname>(const <classname>& o, bool verbose)'))
     end
     table.insert(lines, apply('{'))
-    table.insert(lines, apply('<indent>std::string s;'))
+    table.insert(lines, apply('<indent>return std::string()'))
     if G.keepindent then
         table.insert(lines, apply('<indent>// clang-format off'))
     end
-    table.insert(lines, apply('<indent>s += "{";'))
+    table.insert(lines, apply('<indent>+ "{"'))
 
-    --- Get straight - no null check code variation
-    local function codex()
+    --- No null check variation
+    local function straight_line()
         return
-        'std::string() + <dquote> + "<label>"<labelpad> + <dquote> + <colon> + <functionname>(<value><valuepad>, verbose);'
+        '<functionname>("<label>")<labelpad> + <colon> + <functionname>(<value><valuepad>, verbose)'
     end
-    local function codez()
+    --- Print null variation
+    local function shownull_line()
         return
-        'std::string() + <dquote> + "<label>"<labelpad> + <dquote> + <colon> + (<nullcheck><valuepad> ? <functionname>(<nullvalue>, verbose) : <functionname>(<value><valuepad>, verbose));'
+        '<functionname>("<label>")<labelpad> + <colon> + (<nullcheck><valuepad> ? <functionname>(<nullvalue>, verbose) : <functionname>(<value><valuepad>, verbose))'
     end
-    local function codey()
+    --- Skip null variation
+    local function skipnull_line()
         return
-        '(<nullcheck><valuepad> ? "" : std::string() + <dquote> + "<label>"<labelpad> + <dquote> + <colon> + <functionname>(<value><valuepad>, verbose));'
+        '(<nullcheck><valuepad> ? "" : <functionname>("<label>")<labelpad> + <colon> + <functionname>(<value><valuepad>, verbose))'
     end
 
     --- Get no-null-check code variation
     local function straight_code(l)
-        table.insert(l, apply('<indent>s += ' .. codex()))
+        table.insert(l, apply('<indent>+ ' .. straight_line()))
     end
 
     --- Get skip-null code variation
     local function skipnull_code(l)
-        table.insert(l, apply('<indent>s += ' .. codey()))
+        table.insert(l, apply('<indent>+ ' .. skipnull_line()))
     end
 
     --- Get show-null code variation
     local function shownull_code(l)
-        table.insert(l, apply('<indent>s += ' .. codez()))
+        table.insert(l, apply('<indent>+ ' .. shownull_line()))
     end
 
     local idx = 1
@@ -159,11 +161,10 @@ local function save_class_snippet(node, alias, friend)
         idx = idx + 1
     end
 
-    table.insert(lines, apply('<indent>s += "}";'))
+    table.insert(lines, apply('<indent>+ "}";'))
     if G.keepindent then
         table.insert(lines, apply('<indent>// clang-format on'))
     end
-    table.insert(lines, apply('<indent>return s;'))
     table.insert(lines, apply('}'))
 
     for _, l in ipairs(lines) do log.debug(l) end
