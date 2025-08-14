@@ -41,7 +41,7 @@ local function labels_and_values(node, object)
     local records = {}
     ast.visit_children(node,
         function(n)
-            if n.kind == "Field" then
+            if not ast.anonymous(n) and (n.kind == "Field" or n.kind == "IndirectField") then
                 local record = {}
                 record.field = ast.name(n)
                 record.label = G.class.shift.label(ast.name(node), record.field, utl.camelize(record.field))

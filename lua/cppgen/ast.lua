@@ -17,9 +17,9 @@ function M.dfs(node, filt, pref, posf)
     if filt(node) then
         if node.children then
             for _, child in ipairs(node.children) do
-	            M.dfs(child, filt, pref, posf)
-		    end
-	    end
+                M.dfs(child, filt, pref, posf)
+            end
+        end
     end
     if posf then
         posf(node)
@@ -33,19 +33,19 @@ function M.visit_children(node, f)
             if not f(child) then
                 return
             end
-		end
+        end
     end
 end
 
 --- Count immediate children of a given node that satisfy the predicate.
-function M.count_children(node, p)
+function M.count_children(node, predicate)
     local cnt = 0
     if node.children then
         for _, child in ipairs(node.children) do
-            if p(child) then
-               cnt = cnt + 1
+            if predicate(child) then
+                cnt = cnt + 1
             end
-		end
+        end
     end
     return cnt
 end
@@ -55,12 +55,10 @@ function M.details(node)
     if node then
         if node.range then
             return node.role .. ' ' .. node.kind .. ' ' .. (node.detail or "<???>") .. '[' .. node.range['start'].line .. ',' .. node.range['end'].line .. ']'
-        else
-            return node.role .. ' ' .. node.kind .. ' ' .. (node.detail or "<???>") .. '[]'
         end
-    else
-        return 'nil'
+        return node.role .. ' ' .. node.kind .. ' ' .. (node.detail or "<???>") .. '[]'
     end
+    return 'nil'
 end
 
 --- Return node line span.
@@ -75,9 +73,16 @@ end
 function M.name(node)
     if node then
         return (node.detail or "<???>")
-    else
-        return 'nil'
     end
+    return 'nil'
+end
+
+--- Return true if node is an anonymous struct or class.
+function M.anonymous(node)
+    if node and node.detail then
+        return string.find(node.detail, 'anonymous struct') or string.find(node.detail, 'anonymous class')
+    end
+    return false
 end
 
 -- Attempt to find the node type
@@ -92,7 +97,7 @@ function M.type(node)
                 result = n.detail
             end
         end
-        )
+    )
     return result
 end
 
@@ -108,7 +113,8 @@ end
 
 --- Returns true if two nodes perfectly overlay each other
 function M.overlay(nodea, nodeb)
-    return nodea and nodeb and nodea.range and nodeb.range and nodea.range['end'].line == nodeb.range['end'].line and nodea.range['start'].line == nodeb.range['start'].line
+    return nodea and nodeb and nodea.range and nodeb.range and nodea.range['end'].line == nodeb.range['end'].line and
+        nodea.range['start'].line == nodeb.range['start'].line
 end
 
 --- Returns true if the node has zero range
