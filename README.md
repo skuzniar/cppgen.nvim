@@ -25,11 +25,11 @@ the current context. Certain language constructs, like classes, enumerations, or
 - Enumeration switch statements.
 
 ## Dependencies
-- [nvim-cmp](https:ithub.com/hrsh7th/nvim-cmp)
-- [nvim-lspconfig](https:ithub.com/neovim/nvim-lspconfig)
+- [nvim-cmp](https:github.com/hrsh7th/nvim-cmp)
+- [nvim-lspconfig](https:github.com/neovim/nvim-lspconfig)
 
 ## Installation
-**Using [lazy.nvim](https:ithub.com/folke/lazy.nvim):**
+**Using [lazy.nvim](https:github.com/folke/lazy.nvim):**
 ```lua
 {
     "skuzniar/cppgen.nvim",
