@@ -103,7 +103,7 @@ M.default = {
             name = "to_json",
 
             -- Additional completion trigger if present.
-            trigger = "to_json"
+            trigger = "json"
         },
 
         -- Serialization using cereal library.
@@ -280,7 +280,7 @@ M.default = {
             name = "to_json",
 
             -- Additional completion trigger if present.
-            trigger = "to_json"
+            trigger = "json"
         },
 
         -- Switch statement generator.

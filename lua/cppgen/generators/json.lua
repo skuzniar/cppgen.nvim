@@ -125,18 +125,18 @@ local function save_class_snippet(node, alias, friend)
     end
 
     --- Get no-null-check code variation
-    local function straight_code(l)
-        table.insert(l, apply('<indent>+ ' .. straight_line()))
+    local function straight_code(l, last)
+        table.insert(l, apply('<indent>+ ' .. straight_line() .. (last and '' or ' + <comma>')))
     end
 
     --- Get skip-null code variation
-    local function skipnull_code(l)
-        table.insert(l, apply('<indent>+ ' .. skipnull_line()))
+    local function skipnull_code(l, last)
+        table.insert(l, apply('<indent>+ ' .. skipnull_line() .. (last and '' or ' + <comma>')))
     end
 
     --- Get show-null code variation
-    local function shownull_code(l)
-        table.insert(l, apply('<indent>+ ' .. shownull_line()))
+    local function shownull_code(l, last)
+        table.insert(l, apply('<indent>+ ' .. shownull_line() .. (last and '' or ' + <comma>')))
     end
 
     local idx = 1
@@ -151,12 +151,12 @@ local function save_class_snippet(node, alias, friend)
 
         if r.nullcheck ~= nil then
             if r.nullvalue ~= nil then
-                shownull_code(lines)
+                shownull_code(lines, idx == #records)
             else
                 skipnull_code(lines, idx == #records)
             end
         else
-            straight_code(lines)
+            straight_code(lines, idx == #records)
         end
         idx = idx + 1
     end
