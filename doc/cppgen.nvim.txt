@@ -51,7 +51,6 @@ FEATURES                                                *cppgen.nvim-features*
 DEPENDENCIES                                        *cppgen.nvim-dependencies*
 
 - nvim-cmp <https:ithub.com/hrsh7th/nvim-cmp>
-- nvim-lspconfig <https:ithub.com/neovim/nvim-lspconfig>
 
 
 INSTALLATION                                        *cppgen.nvim-installation*
@@ -63,7 +62,6 @@ INSTALLATION                                        *cppgen.nvim-installation*
         "skuzniar/cppgen.nvim",
         dependencies = {
             "hrsh7th/nvim-cmp",
-            "neovim/nvim-lspconfig"
         },
         opts = {}
     }

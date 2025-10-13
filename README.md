@@ -26,7 +26,6 @@ the current context. Certain language constructs, like classes, enumerations, or
 
 ## Dependencies
 - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
-- [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)
 
 ## Installation
 **Using [lazy.nvim](https://github.com/folke/lazy.nvim):**
@@ -35,7 +34,6 @@ the current context. Certain language constructs, like classes, enumerations, or
     "skuzniar/cppgen.nvim",
     dependencies = {
         "hrsh7th/nvim-cmp",
-        "neovim/nvim-lspconfig"
     },
     opts = {}
 }
