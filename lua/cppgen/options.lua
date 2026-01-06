@@ -185,8 +185,8 @@ M.default = {
 
         -- Enum cast functions. Conversions from various types into enum.
         cast = {
-            -- From string conversion function. Matches enumerator name. Specializations of: template <typename T, typename F> T enum_cast(F f).
-            enum_cast = {
+            -- From string conversion. Specializations of: template <typename T> T enum_cast(std::string_view v).
+            from_string = {
                 -- Enabled by default.
                 enabled = true,
 
@@ -196,8 +196,8 @@ M.default = {
                         value .. ') + " is outside of ' .. classname .. ' enumeration range.")'
                 end,
             },
-            -- No-throw version of enum_cast. Specializations of: template <typename T, typename F, typename E> T enum_cast(F f, E& error).
-            enum_cast_no_throw = {
+            -- No-throw version of from string conversion. Specializations of: template <typename T> T enum_cast(std::string_view v, E& error).
+            from_string_no_throw = {
                 -- Enabled by default.
                 enabled = true,
 
@@ -209,8 +209,8 @@ M.default = {
                         value .. ') + " is outside of ' .. classname .. ' enumeration range."'
                 end,
             },
-            -- From integer conversion function. Matches enumerator value. Specializations of: template <typename T, typename F> T enum_cast(F f).
-            value_cast = {
+            -- From integer conversion. Specializations of: template <typename T> T enum_cast(int v).
+            from_integer = {
                 -- Enabled by default.
                 enabled = true,
 
@@ -220,8 +220,8 @@ M.default = {
                         value .. ') + " is outside of ' .. classname .. ' enumeration range.")'
                 end,
             },
-            -- No-throw version of value_cast. Specializations of: template <typename T, typename F, typename E> T enum_cast(F f, E& error).
-            value_cast_no_throw = {
+            -- No-throw version of from integer conversion. Specializations of: template <typename T> T enum_cast(int v, E& error).
+            from_integer_no_throw = {
                 -- Enabled by default.
                 enabled = true,
 
@@ -237,8 +237,6 @@ M.default = {
             name = "enum_cast",
             -- Additional completion trigger if present.
             trigger = "enum_cast",
-            -- Combine all cast snippets into one.
-            combine = true
         },
 
         -- Terse and verbose JSON serialization

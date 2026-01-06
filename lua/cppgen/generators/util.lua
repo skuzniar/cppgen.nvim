@@ -29,7 +29,7 @@ local function enum_record(node)
     log.trace("enum_record:", ast.details(node))
 
     local v, k = enum_value_and_kind(node)
-    return {label=ast.name(node), value=v, kind=k}
+    return { label = ast.name(node), value = v, kind = k }
 end
 
 local M = {}
@@ -68,8 +68,8 @@ end
 ---------------------------------------------------------------------------------------------------
 function M.combine(...)
     local items = {}
-    for _,t in ipairs({...}) do
-        for _,i in ipairs(t) do
+    for _, t in ipairs({ ... }) do
+        for _, i in ipairs(t) do
             table.insert(items, i)
         end
     end
@@ -77,13 +77,22 @@ function M.combine(...)
 end
 
 ---------------------------------------------------------------------------------------------------
+-- Append items from one table into another table.
+---------------------------------------------------------------------------------------------------
+function M.append(to, from)
+    for _, i in ipairs(from) do
+        table.insert(to, i)
+    end
+end
+
+---------------------------------------------------------------------------------------------------
 -- Convert multiple tables of tables of items into a single table of items.
 ---------------------------------------------------------------------------------------------------
 function M.flatten(...)
     local items = {}
-    for _,tt in ipairs({...}) do
-        for _,t in ipairs(tt) do
-            for _,i in ipairs(t) do
+    for _, tt in ipairs({ ... }) do
+        for _, t in ipairs(tt) do
+            for _, i in ipairs(t) do
                 table.insert(items, i)
             end
         end
@@ -92,7 +101,7 @@ function M.flatten(...)
 end
 
 ---------------------------------------------------------------------------------------------------
--- Apply parameters to the format string 
+-- Apply parameters to the format string
 ---------------------------------------------------------------------------------------------------
 function M.apply(sub, str)
     local squote = '"' .. "'" .. '"'
