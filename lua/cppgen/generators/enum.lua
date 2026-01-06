@@ -146,19 +146,19 @@ local function string_cast_snippets(node, alias, specifier, throw)
 
     local maxllen, _ = max_lengths(utl.enum_records(node))
 
-    local decl   = {}
-    local spec   = {}
+    local decl       = {}
+    local spec       = {}
     if throw then
         table.insert(decl, apply('<declaration> <specifier><attribute> T <functionname>(std::string_view v);'))
         table.insert(spec,
-            apply('<specialization> <specifier><attribute> <classname> <functionname><<classname>>(std::string_view v)'))
+            apply('<specialization> <attribute> <classname> <functionname><<classname>>(std::string_view v)'))
     else
         table.insert(decl,
             apply(
                 '<declaration> <specifier><attribute> T <functionname>(std::string_view v, <errortype>& error) noexcept;'))
         table.insert(spec,
             apply(
-                '<specialization> <specifier><attribute> <classname> <functionname><<classname>>(std::string_view v, <errortype>& error) noexcept'))
+                '<specialization> <attribute> <classname> <functionname><<classname>>(std::string_view v, <errortype>& error) noexcept'))
     end
     table.insert(spec, '{')
     if G.keepindent then
@@ -212,15 +212,18 @@ local function integer_cast_snippets(node, alias, specifier, throw)
 
     local maxllen, _ = max_lengths(utl.enum_records(node))
 
-    local decl   = {}
-    local spec   = {}
+    local decl       = {}
+    local spec       = {}
 
     if throw then
         table.insert(decl, apply('<declaration> <specifier><attribute> T <functionname>(int v);'))
-        table.insert(spec, apply('<specialization> <specifier><attribute> <classname> <functionname><<classname>>(int v)'))
+        table.insert(spec, apply('<specialization> <attribute> <classname> <functionname><<classname>>(int v)'))
     else
-        table.insert(decl, apply('<declaration> <specifier><attribute> T <functionname>(int v, <errortype>& error) noexcept;'))
-        table.insert(spec, apply('<specialization> <specifier><attribute> <classname> <functionname><<classname>>(int v, <errortype>& error) noexcept'))
+        table.insert(decl,
+            apply('<declaration> <specifier><attribute> T <functionname>(int v, <errortype>& error) noexcept;'))
+        table.insert(spec,
+            apply(
+                '<specialization> <attribute> <classname> <functionname><<classname>>(int v, <errortype>& error) noexcept'))
     end
     table.insert(spec, '{')
 
@@ -294,26 +297,26 @@ end
 local function cast_member_items(node, alias)
     log.trace("cast_member_items:", ast.details(node))
 
-    local decls   = {}
-    local specs   = {}
+    local decls = {}
+    local specs = {}
 
     if G.enum.cast.from_string.enabled then
-        local decl, spec =  string_cast_snippets(node, alias, 'static', true)
+        local decl, spec = string_cast_snippets(node, alias, 'static', true)
         utl.append(decls, decl)
         utl.append(specs, spec)
     end
     if G.enum.cast.from_string_no_throw.enabled then
-        local decl, spec =  string_cast_snippets(node, alias, 'static', false)
+        local decl, spec = string_cast_snippets(node, alias, 'static', false)
         utl.append(decls, decl)
         utl.append(specs, spec)
     end
     if G.enum.cast.from_integer.enabled then
-        local decl, spec =  integer_cast_snippets(node, alias, 'static', true)
+        local decl, spec = integer_cast_snippets(node, alias, 'static', true)
         utl.append(decls, decl)
         utl.append(specs, spec)
     end
     if G.enum.cast.from_integer_no_throw.enabled then
-        local decl, spec =  integer_cast_snippets(node, alias, 'static', false)
+        local decl, spec = integer_cast_snippets(node, alias, 'static', false)
         utl.append(decls, decl)
         utl.append(specs, spec)
     end
@@ -321,7 +324,7 @@ local function cast_member_items(node, alias)
     for _, l in ipairs(decls) do log.info(l) end
     for _, l in ipairs(specs) do log.info(l) end
 
-    return cast_items({decls}, {specs})
+    return cast_items({ decls }, { specs })
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -330,31 +333,31 @@ end
 local function cast_free_items(node, alias)
     log.trace("cast_free_items:", ast.details(node))
 
-    local decls   = {}
-    local specs   = {}
+    local decls = {}
+    local specs = {}
 
     if G.enum.cast.from_string.enabled then
-        local decl, spec =  string_cast_snippets(node, alias, 'inline', true)
+        local decl, spec = string_cast_snippets(node, alias, 'inline', true)
         utl.append(decls, decl)
         utl.append(specs, spec)
     end
     if G.enum.cast.from_string_no_throw.enabled then
-        local decl, spec =  string_cast_snippets(node, alias, 'inline', false)
+        local decl, spec = string_cast_snippets(node, alias, 'inline', false)
         utl.append(decls, decl)
         utl.append(specs, spec)
     end
     if G.enum.cast.from_integer.enabled then
-        local decl, spec =  integer_cast_snippets(node, alias, 'inline', true)
+        local decl, spec = integer_cast_snippets(node, alias, 'inline', true)
         utl.append(decls, decl)
         utl.append(specs, spec)
     end
     if G.enum.cast.from_integer_no_throw.enabled then
-        local decl, spec =  integer_cast_snippets(node, alias, 'inline', false)
+        local decl, spec = integer_cast_snippets(node, alias, 'inline', false)
         utl.append(decls, decl)
         utl.append(specs, spec)
     end
 
-    return cast_items({decls}, {specs})
+    return cast_items({ decls }, { specs })
 end
 
 ---------------------------------------------------------------------------------------------------
