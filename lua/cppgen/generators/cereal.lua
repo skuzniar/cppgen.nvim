@@ -97,9 +97,9 @@ local function save_class_snippet(node, alias, specifier, member)
     local lines            = {}
 
     if member then
-        table.insert(lines, apply('<specifier><attribute> void <functionname>(Archive& archive) const'))
+        table.insert(lines, apply('<specifier> <attribute> void <functionname>(Archive& archive) const'))
     else
-        table.insert(lines, apply('<specifier><attribute> void <functionname>(Archive& archive, const <classname>& o)'))
+        table.insert(lines, apply('<specifier> <attribute> void <functionname>(Archive& archive, const <classname>& o)'))
     end
     table.insert(lines, apply('{'))
     if G.keepindent then

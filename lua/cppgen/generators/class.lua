@@ -69,7 +69,7 @@ local function shift_snippet(node, alias, specifier)
 
     local lines            = {}
 
-    table.insert(lines, apply('<specifier><attribute> std::ostream& operator<<(std::ostream& s, const <classname>& o)'))
+    table.insert(lines, apply('<specifier> <attribute> std::ostream& operator<<(std::ostream& s, const <classname>& o)'))
     table.insert(lines, apply('{'))
     if G.keepindent then
         table.insert(lines, apply('<indent>// clang-format off'))

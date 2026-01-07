@@ -73,7 +73,7 @@ local function to_string_snippet(node, alias, specifier)
 
     local lines            = {}
 
-    table.insert(lines, apply('<specifier><attribute> std::string <functionname>(<classname> o)'))
+    table.insert(lines, apply('<specifier> <attribute> std::string <functionname>(<classname> o)'))
     table.insert(lines, apply('{'))
     table.insert(lines, apply('<indent>switch(o)'))
     table.insert(lines, apply('<indent>{'))
@@ -147,20 +147,33 @@ local function string_cast_snippets(node, alias, specifier, throw)
     local records    = utl.enum_records(node)
     local maxllen, _ = max_lengths(records)
 
-    local decl       = {}
-    local spec       = {}
-    if throw then
-        table.insert(decl, apply('<declaration> <specifier><attribute> T <functionname>(std::string_view v);'))
-        table.insert(spec,
-            apply('<specialization> <specifier><attribute> <classname> <functionname><<classname>>(std::string_view v)'))
-    else
-        table.insert(decl,
-            apply(
-                '<declaration> <specifier><attribute> T <functionname>(std::string_view v, <errortype>& error) noexcept;'))
-        table.insert(spec,
-            apply(
-                '<specialization> <specifier><attribute> <classname> <functionname><<classname>>(std::string_view v, <errortype>& error) noexcept'))
+    local function declpattern(throwing)
+        if throwing then
+            return '<declaration> <specifier> <attribute> T <functionname>(std::string_view v);'
+        else
+            return '<declaration> <specifier> <attribute> T <functionname>(std::string_view v, <errortype>& error) noexcept;'
+        end
     end
+
+    local function specpattern(throwing)
+        if throwing then
+            if P.specifier == 'static' then
+                return '<specialization> <attribute> <classname> <functionname><<classname>>(std::string_view v)'
+            else
+                return '<specialization> <specifier> <attribute> <classname> <functionname><<classname>>(std::string_view v)'
+            end
+        else
+            if P.specifier == 'static' then
+                return '<specialization> <attribute> <classname> <functionname><<classname>>(std::string_view v, <errortype>& error) noexcept'
+            else
+                return '<specialization> <specifier> <attribute> <classname> <functionname><<classname>>(std::string_view v, <errortype>& error) noexcept'
+            end
+        end
+    end
+
+    local decl = { apply(declpattern(throw)) }
+    local spec = { apply(specpattern(throw)) }
+
     table.insert(spec, '{')
     if G.keepindent then
         table.insert(spec, apply('<indent>// clang-format off'))
@@ -210,19 +223,33 @@ local function integer_cast_snippets(node, alias, specifier, throw)
     local records    = utl.enum_records(node)
     local maxllen, _ = max_lengths(records)
 
-    local decl       = {}
-    local spec       = {}
-
-    if throw then
-        table.insert(decl, apply('<declaration> <specifier><attribute> T <functionname>(int v);'))
-        table.insert(spec, apply('<specialization> <specifier><attribute> <classname> <functionname><<classname>>(int v)'))
-    else
-        table.insert(decl,
-            apply('<declaration> <specifier><attribute> T <functionname>(int v, <errortype>& error) noexcept;'))
-        table.insert(spec,
-            apply(
-                '<specialization> <specifier><attribute> <classname> <functionname><<classname>>(int v, <errortype>& error) noexcept'))
+    local function declpattern(throwing)
+        if throwing then
+            return '<declaration> <specifier> <attribute> T <functionname>(int v);'
+        else
+            return '<declaration> <specifier> <attribute> T <functionname>(int v, <errortype>& error) noexcept;'
+        end
     end
+
+    local function specpattern(throwing)
+        if throwing then
+            if P.specifier == 'static' then
+                return '<specialization> <attribute> <classname> <functionname><<classname>>(int v)'
+            else
+                return '<specialization> <specifier> <attribute> <classname> <functionname><<classname>>(int v)'
+            end
+        else
+            if P.specifier == 'static' then
+                return '<specialization> <attribute> <classname> <functionname><<classname>>(int v, <errortype>& error) noexcept'
+            else
+                return '<specialization> <specifier> <attribute> <classname> <functionname><<classname>>(int v, <errortype>& error) noexcept'
+            end
+        end
+    end
+
+    local decl = { apply(declpattern(throw)) }
+    local spec = { apply(specpattern(throw)) }
+
     table.insert(spec, '{')
 
     local cnt = ast.count_children(node,
@@ -371,7 +398,7 @@ local function shift_snippet(node, alias, specifier)
 
     local lines            = {}
 
-    table.insert(lines, apply('<specifier><attribute> std::ostream& operator<<(std::ostream& s, <classname> o)'))
+    table.insert(lines, apply('<specifier> <attribute> std::ostream& operator<<(std::ostream& s, <classname> o)'))
     table.insert(lines, apply('{'))
 
     if G.enum.shift.to_string then
