@@ -140,7 +140,7 @@ M.default = {
             -- Enabled by default.
             enabled = true,
 
-            -- Given an enumerator and optional value, return the corresponding string.
+            -- Given an enumerator and optional value, return the string to print.
             value = function(enumerator, value)
                 if (value) then
                     return '"' .. value .. '(' .. enumerator .. ')' .. '"'
@@ -164,7 +164,7 @@ M.default = {
             -- Enabled by default.
             enabled = true,
 
-            -- Given an enumerator and optional value, return the corresponding string.
+            -- Given an enumerator and optional value, return the string to print.
             value = function(enumerator, value)
                 if (value) then
                     return '"' .. value .. '(' .. enumerator .. ')' .. '"'
@@ -190,6 +190,15 @@ M.default = {
                 -- Enabled by default.
                 enabled = true,
 
+                -- Given an enumerator and optional value, return the string to compare against.
+                value = function(enumerator, value)
+                    return enumerator
+                end,
+                -- In rare cases we want to compare against the value instead - stripped if character constant.
+                value = function(enumerator, value)
+                    return string.gsub(value, "'", '')
+                end,
+
                 -- Exception expression thrown if conversion fails
                 exception = function(classname, value)
                     return 'std::out_of_range("Value " + std::string(' ..
@@ -201,8 +210,18 @@ M.default = {
                 -- Enabled by default.
                 enabled = true,
 
+                -- Given an enumerator and optional value, return the string to compare against.
+                value = function(enumerator, value)
+                    return enumerator
+                end,
+                -- In rare cases we want to compare against the value instead - stripped if character constant.
+                value = function(enumerator, value)
+                    return string.gsub(value, "'", '')
+                end,
+
                 -- Error type that will be passed from the conversion function.
                 errortype = 'std::string',
+
                 -- Error expression returned if conversion fails.
                 error = function(classname, value)
                     return '"Value " + std::string(' ..
@@ -227,6 +246,7 @@ M.default = {
 
                 -- Error type that will be passed from the conversion function.
                 errortype = 'std::string',
+
                 -- Exception expression thrown if conversion fails.
                 error = function(classname, value)
                     return '"Value " + std::to_string(' ..

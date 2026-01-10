@@ -34,8 +34,10 @@ local function labels_and_values(node, alias, vf)
     for _, r in ipairs(utl.enum_records(node)) do
         local record = {}
         record.label = (alias and ast.name(alias) or ast.name(node)) .. '::' .. r.label
-        record.value = vf(r.label, r.value)
-        table.insert(lsandvs, record)
+        record.value = vf(r.label or '', r.value or '')
+        if record.label and record.value then
+            table.insert(lsandvs, record)
+        end
     end
     return lsandvs
 end
@@ -144,8 +146,7 @@ local function string_cast_snippets(node, alias, specifier, throw)
     P.declaration    = 'template<typename T>'
     P.specialization = 'template<>'
 
-    local records    = utl.enum_records(node)
-    local maxllen, _ = max_lengths(records)
+    local records    = labels_and_values(node, alias, G.enum.cast.from_string.value)
 
     local function declpattern(throwing)
         if throwing then
@@ -179,10 +180,14 @@ local function string_cast_snippets(node, alias, specifier, throw)
         table.insert(spec, apply('<indent>// clang-format off'))
     end
 
+    local maxllen, maxvlen = max_lengths(records)
+
     for _, r in ipairs(records) do
-        P.fieldname = r.label
-        P.valuepad  = string.rep(' ', maxllen - string.len(P.fieldname))
-        table.insert(spec, apply('<indent>if (v == "<fieldname>")<valuepad> return <classname>::<fieldname>;'))
+        P.label    = r.label
+        P.value    = r.value
+        P.labelpad = string.rep(' ', maxllen - string.len(r.label))
+        P.valuepad = string.rep(' ', maxvlen - string.len(r.value))
+        table.insert(spec, apply('<indent>if (v == "<value>")<valuepad> return <label>;'))
     end
 
     if G.keepindent then
@@ -252,12 +257,6 @@ local function integer_cast_snippets(node, alias, specifier, throw)
 
     table.insert(spec, '{')
 
-    local cnt = ast.count_children(node,
-        function(n)
-            return n.kind == "EnumConstant"
-        end
-    )
-
     table.insert(spec, apply('<indent>if ('))
     if G.keepindent then
         table.insert(spec, apply('<indent><indent>// clang-format off'))
@@ -267,7 +266,7 @@ local function integer_cast_snippets(node, alias, specifier, throw)
     for _, r in ipairs(records) do
         P.fieldname = r.label
         P.valuepad  = string.rep(' ', maxllen - string.len(P.fieldname))
-        if idx == cnt then
+        if idx == #records then
             table.insert(spec,
                 apply(
                     '<indent><indent>v == static_cast<std::underlying_type_t<<classname>>>(<classname>::<fieldname>)<valuepad>)'))
