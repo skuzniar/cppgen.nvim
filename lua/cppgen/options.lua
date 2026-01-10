@@ -195,9 +195,11 @@ M.default = {
                     return enumerator
                 end,
                 -- In rare cases we want to compare against the value instead - stripped if character constant.
+                --[[
                 value = function(enumerator, value)
                     return string.gsub(value, "'", '')
                 end,
+                --]]
 
                 -- Exception expression thrown if conversion fails
                 exception = function(classname, value)
@@ -215,9 +217,11 @@ M.default = {
                     return enumerator
                 end,
                 -- In rare cases we want to compare against the value instead - stripped if character constant.
+                --[[
                 value = function(enumerator, value)
                     return string.gsub(value, "'", '')
                 end,
+                --]]
 
                 -- Error type that will be passed from the conversion function.
                 errortype = 'std::string',
